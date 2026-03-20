@@ -488,7 +488,6 @@ export default function App() {
         }}>
           <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black font-bold text-lg shadow-[0_0_15px_rgba(255,255,255,0.3)] group-hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-all relative">
             S
-            <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-black animate-pulse"></div>
           </div>
           <span className="font-sans font-semibold text-xl tracking-tight text-white group-hover:text-blue-400 transition-colors">San Sloud</span>
         </div>
@@ -503,17 +502,7 @@ export default function App() {
             <ExternalLink size={12} />
             Copy App URL
           </button>
-          <div className="lg:hidden px-2 py-1 bg-blue-500/10 border border-blue-500/20 rounded text-[10px] text-blue-400 font-bold uppercase tracking-tighter">
-            Mobile Active
-          </div>
           <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] font-mono text-neutral-600 uppercase tracking-widest">Build v1.3.5</span>
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-medium text-neutral-500 uppercase tracking-tighter">Live Sync</span>
-              </div>
-            </div>
             <button 
               onClick={() => {
                 // Aggressive cache clearing and reload
