@@ -235,65 +235,86 @@ export default function App() {
 
     try {
       const serperKey = import.meta.env.VITE_SERPER_API_KEY;
+      let serperSuccess = false;
 
       if (serperKey) {
-        // Fetch Organic Results
-        const organicPromise = fetch('https://google.serper.dev/search', {
-          method: 'POST',
-          headers: {
-            'X-API-KEY': serperKey,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ q: activeQuery })
-        }).then(res => res.json());
+        try {
+          // Fetch Organic Results
+          const organicPromise = fetch('https://google.serper.dev/search', {
+            method: 'POST',
+            headers: {
+              'X-API-KEY': serperKey,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ q: activeQuery })
+          }).then(async res => {
+            if (!res.ok) {
+              const errorText = await res.text();
+              throw new Error(`Serper Organic Error: ${res.status} ${errorText}`);
+            }
+            return res.json();
+          });
 
-        // Fetch Image Results
-        const imagesPromise = fetch('https://google.serper.dev/images', {
-          method: 'POST',
-          headers: {
-            'X-API-KEY': serperKey,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ q: activeQuery, num: 20 })
-        }).then(res => res.json());
+          // Fetch Image Results
+          const imagesPromise = fetch('https://google.serper.dev/images', {
+            method: 'POST',
+            headers: {
+              'X-API-KEY': serperKey,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ q: activeQuery, num: 20 })
+          }).then(async res => {
+            if (!res.ok) {
+              const errorText = await res.text();
+              throw new Error(`Serper Images Error: ${res.status} ${errorText}`);
+            }
+            return res.json();
+          });
 
-        const [data, imageData] = await Promise.all([organicPromise, imagesPromise]);
-        
-        if (data.organic && data.organic.length > 0) {
-          const filteredResults = data.organic
-            .filter((item: any) => !isGamblingSite(item.title) && !isGamblingSite(item.snippet || '') && !isGamblingSite(item.link))
-            .map((item: any) => ({
-              title: item.title,
-              uri: item.link,
-              snippet: item.snippet,
-              imageUrl: item.imageUrl
-            }));
-          setResults(filteredResults);
-        }
-
-        if (imageData.images && imageData.images.length > 0) {
-          const filteredImages = imageData.images
-            .filter((img: any) => !isGamblingSite(img.title) && !isGamblingSite(img.link))
-            .map((img: any) => ({
-              title: img.title,
-              imageUrl: img.imageUrl,
-              link: img.link
-            }));
-          setImages(filteredImages);
-        }
-        
-        if (data.answerBox) {
-          setAnswer(data.answerBox.snippet || data.answerBox.answer || null);
-        } 
-        
-        if (data.knowledgeGraph && !currentKg) {
-          currentKg = data.knowledgeGraph;
-          if (!currentKg.imageUrl && imageData.images && imageData.images[0]) {
-            currentKg.imageUrl = imageData.images[0].imageUrl;
+          const [data, imageData] = await Promise.all([organicPromise, imagesPromise]);
+          
+          if (data.organic && data.organic.length > 0) {
+            const filteredResults = data.organic
+              .filter((item: any) => !isGamblingSite(item.title) && !isGamblingSite(item.snippet || '') && !isGamblingSite(item.link))
+              .map((item: any) => ({
+                title: item.title,
+                uri: item.link,
+                snippet: item.snippet,
+                imageUrl: item.imageUrl
+              }));
+            setResults(filteredResults);
           }
-          setKnowledgePanel(currentKg);
+
+          if (imageData.images && imageData.images.length > 0) {
+            const filteredImages = imageData.images
+              .filter((img: any) => !isGamblingSite(img.title) && !isGamblingSite(img.link))
+              .map((img: any) => ({
+                title: img.title,
+                imageUrl: img.imageUrl,
+                link: img.link
+              }));
+            setImages(filteredImages);
+          }
+          
+          if (data.answerBox) {
+            setAnswer(data.answerBox.snippet || data.answerBox.answer || null);
+          } 
+          
+          if (data.knowledgeGraph && !currentKg) {
+            currentKg = data.knowledgeGraph;
+            if (!currentKg.imageUrl && imageData.images && imageData.images[0]) {
+              currentKg.imageUrl = imageData.images[0].imageUrl;
+            }
+            setKnowledgePanel(currentKg);
+          }
+          serperSuccess = true;
+        } catch (serperErr) {
+          console.error("Serper API failed, falling back to Gemini:", serperErr);
+          // Continue to Gemini fallback below
         }
-      } else {
+      }
+
+      if (!serperSuccess) {
         // Fallback to Gemini with Streaming for faster perceived performance
         const responseStream = await genAI.models.generateContentStream({
           model: "gemini-3-flash-preview",
