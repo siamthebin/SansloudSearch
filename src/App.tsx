@@ -363,27 +363,38 @@ export default function App() {
               hasAnyResults = true;
               
               // Also try to get a summary for the first result
-              const firstTitle = wikiData.query.search[0].title;
-              const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(firstTitle)}`);
-              const summaryData = await summaryRes.json();
-              if (summaryData.extract) {
-                setAnswer(summaryData.extract);
-                if (summaryData.thumbnail) {
-                  setKnowledgePanel({
-                    title: summaryData.title,
-                    type: summaryData.description || "Wikipedia Article",
-                    description: summaryData.extract,
-                    imageUrl: summaryData.thumbnail.source,
-                    attributes: {},
-                    isAiGenerated: false
-                  });
+              try {
+                const firstTitle = wikiData.query.search[0].title;
+                const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(firstTitle)}`);
+                if (summaryRes.ok) {
+                  const summaryData = await summaryRes.json();
+                  if (summaryData.extract) {
+                    setAnswer(summaryData.extract);
+                    if (summaryData.thumbnail) {
+                      setKnowledgePanel({
+                        title: summaryData.title,
+                        type: summaryData.description || "Wikipedia Article",
+                        description: summaryData.extract,
+                        imageUrl: summaryData.thumbnail.source,
+                        attributes: {},
+                        isAiGenerated: false
+                      });
+                    }
+                  }
                 }
+              } catch (summaryErr) {
+                console.error("Wikipedia summary fetch failed:", summaryErr);
+                // Don't throw here, we already have results
               }
             } else {
               throw new Error("No Wikipedia results");
             }
           } catch (wikiErr) {
-            throw new Error("Search failed: Serper API is blocked/failing, Gemini API Key is missing, and Wikipedia fallback found no results. Please check your API keys in settings.");
+            console.error("Wikipedia fallback failed:", wikiErr);
+            // Only throw if we don't have any results
+            if (!hasAnyResults) {
+              throw new Error("Search failed: Serper API is blocked/failing, Gemini API Key is missing, and Wikipedia fallback found no results. Please check your API keys in settings.");
+            }
           }
         } else {
           // Fallback to Gemini with Streaming for faster perceived performance
@@ -403,6 +414,7 @@ export default function App() {
             if (chunk.text) {
               fullText += chunk.text;
               setAnswer(fullText);
+              hasAnyResults = true;
             }
             
             if (!foundResults) {
@@ -417,6 +429,7 @@ export default function App() {
                 if (extractedResults.length > 0) {
                   setResults(extractedResults);
                   foundResults = true;
+                  hasAnyResults = true;
                 }
               }
             }
@@ -466,6 +479,7 @@ export default function App() {
                   ...aiPanelData,
                   isAiGenerated: true
                 });
+                hasAnyResults = true;
               }
             } catch (parseError) {
               console.error("JSON Parse Error for AI Panel:", parseError, aiPanelResponse.text);
@@ -481,7 +495,7 @@ export default function App() {
       }
 
       // Final check: if we have no results, no answer, and no knowledge panel, it's a failed search
-      if (results.length === 0 && !answer && !knowledgePanel && !currentKg) {
+      if (!hasAnyResults && !currentKg) {
         if (!serperSuccess && !geminiKey) {
           setError("Search failed: Serper API is not returning results and Gemini API Key is missing. Please check your API keys in settings.");
         } else {
