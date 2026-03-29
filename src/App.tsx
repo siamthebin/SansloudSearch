@@ -230,6 +230,7 @@ export default function App() {
 
     // Filter for gambling/casino sites
     const isGamblingSite = (text: string) => {
+      if (!text) return false;
       const gamblingKeywords = ['casino', 'gambling', 'betting', 'juy', 'poker', 'slot', 'jackpot', 'lottery', '1xbet', 'melbet', 'bet365', 'betway', 'parimatch'];
       return gamblingKeywords.some(keyword => text.toLowerCase().includes(keyword));
     };
@@ -348,45 +349,80 @@ export default function App() {
 
       if (!serperSuccess) {
         if (!geminiKey) {
-          throw new Error("Gemini API Key is missing. Please set GEMINI_API_KEY in settings.");
-        }
-
-        // Fallback to Gemini with Streaming for faster perceived performance
-        const responseStream = await ai.models.generateContentStream({
-          model: "gemini-3-flash-preview",
-          contents: [{ role: 'user', parts: [{ text: activeQuery }] }],
-          config: {
-            systemInstruction: "You are San Sloud, a highly precise and accurate general search engine. You MUST use the googleSearch tool to find EXACT, real-world information, websites, and factual data for the user's query. If the user searches for a website like 'YouTube' or 'Facebook', provide the direct link and a brief description. Do not hallucinate. Format your response beautifully using markdown.",
-            tools: [{ googleSearch: {} }],
-          },
-        });
-
-        let fullText = '';
-        let foundResults = false;
-        
-        for await (const chunk of responseStream) {
-          if (chunk.text) {
-            fullText += chunk.text;
-            setAnswer(fullText);
+          // Fallback to Wikipedia API if both Serper and Gemini fail
+          try {
+            const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(activeQuery)}&utf8=&format=json&origin=*`);
+            const wikiData = await wikiRes.json();
+            if (wikiData.query && wikiData.query.search && wikiData.query.search.length > 0) {
+              const wikiResults = wikiData.query.search.map((item: any) => ({
+                title: item.title,
+                uri: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
+                snippet: item.snippet.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML tags
+              }));
+              setResults(wikiResults);
+              hasAnyResults = true;
+              
+              // Also try to get a summary for the first result
+              const firstTitle = wikiData.query.search[0].title;
+              const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(firstTitle)}`);
+              const summaryData = await summaryRes.json();
+              if (summaryData.extract) {
+                setAnswer(summaryData.extract);
+                if (summaryData.thumbnail) {
+                  setKnowledgePanel({
+                    title: summaryData.title,
+                    type: summaryData.description || "Wikipedia Article",
+                    description: summaryData.extract,
+                    imageUrl: summaryData.thumbnail.source,
+                    attributes: {},
+                    isAiGenerated: false
+                  });
+                }
+              }
+            } else {
+              throw new Error("No Wikipedia results");
+            }
+          } catch (wikiErr) {
+            throw new Error("Search failed: Serper API is blocked/failing, Gemini API Key is missing, and Wikipedia fallback found no results. Please check your API keys in settings.");
           }
+        } else {
+          // Fallback to Gemini with Streaming for faster perceived performance
+          const responseStream = await ai.models.generateContentStream({
+            model: "gemini-3-flash-preview",
+            contents: [{ role: 'user', parts: [{ text: activeQuery }] }],
+            config: {
+              systemInstruction: "You are San Sloud, a highly precise and accurate general search engine. You MUST use the googleSearch tool to find EXACT, real-world information, websites, and factual data for the user's query. If the user searches for a website like 'YouTube' or 'Facebook', provide the direct link and a brief description. Do not hallucinate. Format your response beautifully using markdown.",
+              tools: [{ googleSearch: {} }],
+            },
+          });
+
+          let fullText = '';
+          let foundResults = false;
           
-          if (!foundResults) {
-            const chunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
-            if (chunks) {
-              const extractedResults = chunks
-                .filter((c: any) => c.web)
-                .map((c: any) => ({
-                  title: c.web?.title || 'Untitled',
-                  uri: c.web?.uri || '',
-                }));
-              if (extractedResults.length > 0) {
-                setResults(extractedResults);
-                foundResults = true;
+          for await (const chunk of responseStream) {
+            if (chunk.text) {
+              fullText += chunk.text;
+              setAnswer(fullText);
+            }
+            
+            if (!foundResults) {
+              const chunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
+              if (chunks) {
+                const extractedResults = chunks
+                  .filter((c: any) => c.web)
+                  .map((c: any) => ({
+                    title: c.web?.title || 'Untitled',
+                    uri: c.web?.uri || '',
+                  }));
+                if (extractedResults.length > 0) {
+                  setResults(extractedResults);
+                  foundResults = true;
+                }
               }
             }
           }
+          if (!fullText) setAnswer("No direct answer found.");
         }
-        if (!fullText) setAnswer("No direct answer found.");
       }
 
       // AI Knowledge Panel Fallback (Run if no KG found so far)
