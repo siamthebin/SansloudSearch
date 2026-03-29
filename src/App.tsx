@@ -133,23 +133,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [isReading, setIsReading] = useState(false);
   const [isGeneratingKg, setIsGeneratingKg] = useState(false);
-  const [activeUrl, setActiveUrl] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  const transformUrl = (url: string) => {
-    try {
-      const u = new URL(url);
-      if (u.hostname.includes('youtube.com') && u.pathname === '/watch') {
-        const v = u.searchParams.get('v');
-        if (v) return `https://www.youtube.com/embed/${v}`;
-      }
-      if (u.hostname.includes('youtu.be')) {
-        const v = u.pathname.slice(1);
-        if (v) return `https://www.youtube.com/embed/${v}`;
-      }
-    } catch (e) {}
-    return url;
-  };
 
   const handleReadWithAI = async (url: string) => {
     setIsReading(true);
@@ -209,7 +193,7 @@ export default function App() {
       if (!/^https?:\/\//i.test(finalUrl)) {
         finalUrl = 'https://' + finalUrl;
       }
-      setActiveUrl(finalUrl);
+      window.open(finalUrl, '_blank');
       setQuery(finalUrl);
       setShowHistory(false);
       return;
@@ -222,7 +206,6 @@ export default function App() {
     setResults([]);
     setImages([]);
     setKnowledgePanel(null);
-    setActiveUrl(null);
     saveToHistory(activeQuery);
     setShowHistory(false);
 
@@ -519,57 +502,6 @@ export default function App() {
   // Quick Apps Data
   return (
     <div className="min-h-screen bg-black flex flex-col items-center text-neutral-200 font-sans">
-      {/* Internal Browser Overlay */}
-      <AnimatePresence>
-        {activeUrl && (
-          <motion.div
-            initial={{ opacity: 0, y: '100%' }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            className="fixed inset-0 z-[200] bg-black flex flex-col"
-          >
-            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-[#0A0A0A]">
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => setActiveUrl(null)}
-                  className="p-2 hover:bg-white/5 rounded-full text-neutral-400 hover:text-white transition-colors"
-                >
-                  <ArrowLeft size={20} />
-                </button>
-                <div className="flex flex-col">
-                  <span className="text-xs text-neutral-500 font-medium uppercase tracking-wider">Viewing Source</span>
-                  <span className="text-sm text-white font-medium truncate max-w-[200px] md:max-w-md">{activeUrl}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => window.open(activeUrl, '_blank')}
-                  className="p-2 hover:bg-white/5 rounded-full text-neutral-400 hover:text-white transition-colors"
-                  title="Open in Browser"
-                >
-                  <ExternalLink size={18} />
-                </button>
-                <button 
-                  onClick={() => setActiveUrl(null)}
-                  className="p-2 hover:bg-white/5 rounded-full text-neutral-400 hover:text-white transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 bg-white">
-              <iframe 
-                src={transformUrl(activeUrl)} 
-                className="w-full h-full border-none"
-                title="Internal Browser"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Navigation / Header */}
       <header className="w-full px-6 py-4 flex justify-between items-center z-50 border-b border-white/5 bg-black/50 backdrop-blur-md sticky top-0">
         <div className="flex items-center gap-3 group cursor-pointer" onClick={() => {
@@ -578,7 +510,6 @@ export default function App() {
           setAnswer(null);
           setQuery('');
           setKnowledgePanel(null);
-          setActiveUrl(null);
           setError(null);
         }}>
           <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black font-bold text-lg shadow-[0_0_15px_rgba(255,255,255,0.3)] group-hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-all relative">
@@ -883,7 +814,7 @@ export default function App() {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: idx * 0.02 }}
                         className="group cursor-pointer"
-                        onClick={() => setActiveUrl(img.link)}
+                        onClick={() => window.open(img.link, '_blank')}
                       >
                         <div className="aspect-square rounded-xl overflow-hidden bg-neutral-900 border border-white/5 mb-1">
                           <img 
@@ -913,7 +844,7 @@ export default function App() {
                         <motion.button
                           key={idx}
                           onClick={() => {
-                            setActiveUrl(result.uri);
+                            window.open(result.uri, '_blank');
                           }}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
