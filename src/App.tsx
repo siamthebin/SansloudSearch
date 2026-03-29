@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { Search, Globe, Clock, ArrowRight, Sparkles, X, Menu, ExternalLink, ChevronRight, Home, ArrowLeft, RefreshCw, RotateCcw } from 'lucide-react';
+import { Search, Globe, Clock, ArrowRight, Sparkles, X, Menu, ExternalLink, ChevronRight, Home, ArrowLeft, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 import { LoginWithSanscounts } from './components/LoginWithSanscounts';
@@ -567,18 +567,6 @@ export default function App() {
                 </div>
               </div>
             </div>
-            <button 
-              onClick={() => {
-                // Aggressive cache clearing and reload
-                const newUrl = new URL(window.location.href);
-                newUrl.searchParams.set('v', Date.now().toString());
-                window.location.href = newUrl.toString();
-              }}
-              className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-neutral-500 hover:text-white transition-all group"
-              title="Force Update & Clear Cache"
-            >
-              <RotateCcw size={18} className="group-active:rotate-180 transition-transform duration-500" />
-            </button>
           </div>
           {user ? (
             <div className="flex items-center gap-3 bg-[#0A0A0A] border border-white/10 px-3 py-1.5 rounded-full">
