@@ -10,9 +10,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 import { LoginWithSanscounts } from './components/LoginWithSanscounts';
 
-// Initialize Gemini
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-
+// Search result interfaces
 interface SearchResult {
   title: string;
   uri: string;
@@ -115,12 +113,21 @@ interface SearchHistoryItem {
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => sessionStorage.getItem('san_sloud_query') || '');
   const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [images, setImages] = useState<ImageResult[]>([]);
-  const [knowledgePanel, setKnowledgePanel] = useState<any>(null);
-  const [answer, setAnswer] = useState<string | null>(null);
+  const [results, setResults] = useState<SearchResult[]>(() => {
+    const saved = sessionStorage.getItem('san_sloud_results');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [images, setImages] = useState<ImageResult[]>(() => {
+    const saved = sessionStorage.getItem('san_sloud_images');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [knowledgePanel, setKnowledgePanel] = useState<any>(() => {
+    const saved = sessionStorage.getItem('san_sloud_kp');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [answer, setAnswer] = useState<string | null>(() => sessionStorage.getItem('san_sloud_answer') || null);
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,20 +155,32 @@ export default function App() {
     setIsReading(true);
     setAnswer(null);
     try {
-      const response = await genAI.models.generateContent({
+      const geminiKey = process.env.GEMINI_API_KEY;
+      if (!geminiKey) throw new Error("Gemini API Key is missing.");
+      
+      const ai = new GoogleGenAI({ apiKey: geminiKey });
+      const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `Please visit this URL: ${url} and provide a comprehensive, well-formatted summary of its content. Include key points, main arguments, and any important details so I don't have to visit the site directly. Format with clear headings and bullet points.`,
+        contents: [{ role: 'user', parts: [{ text: `Please visit this URL: ${url} and provide a comprehensive, well-formatted summary of its content. Include key points, main arguments, and any important details so I don't have to visit the site directly. Format with clear headings and bullet points.` }] }],
         config: {
           tools: [{ googleSearch: {} }],
         },
       });
       setAnswer(response.text);
-    } catch (err) {
-      setError("AI couldn't read this site. Please try opening it in a new tab.");
+    } catch (err: any) {
+      setError(err.message || "AI couldn't read this site. Please try opening it in a new tab.");
     } finally {
       setIsReading(false);
     }
   };
+
+  useEffect(() => {
+    sessionStorage.setItem('san_sloud_results', JSON.stringify(results));
+    sessionStorage.setItem('san_sloud_images', JSON.stringify(images));
+    sessionStorage.setItem('san_sloud_answer', answer || '');
+    sessionStorage.setItem('san_sloud_kp', JSON.stringify(knowledgePanel));
+    sessionStorage.setItem('san_sloud_query', query);
+  }, [results, images, answer, knowledgePanel, query]);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem('san_sloud_history');
@@ -231,11 +250,20 @@ export default function App() {
         isAiGenerated: false
       };
       setKnowledgePanel(currentKg);
+      // Ensure we don't show "No results" for special cases
     }
 
     try {
-      const serperKey = import.meta.env.VITE_SERPER_API_KEY;
+      // Robust Key Detection: Use environment variable if valid, otherwise fallback to hardcoded key
+      const envSerper = (process.env.VITE_SERPER_API_KEY || import.meta.env.VITE_SERPER_API_KEY || "").trim();
+      const serperKey = (envSerper.length > 10) ? envSerper : '8eb3b36eaebc77d5d951cb868e6a545fa253403c';
+      
+      const geminiKey = process.env.GEMINI_API_KEY;
       let serperSuccess = false;
+      let hasAnyResults = false;
+
+      // Initialize Gemini inside search to ensure latest key
+      const ai = new GoogleGenAI({ apiKey: geminiKey || '' });
 
       if (serperKey) {
         try {
@@ -250,7 +278,7 @@ export default function App() {
           }).then(async res => {
             if (!res.ok) {
               const errorText = await res.text();
-              throw new Error(`Serper Organic Error: ${res.status} ${errorText}`);
+              throw new Error(`Serper Organic Error: ${res.status} ${errorText.substring(0, 50)}`);
             }
             return res.json();
           });
@@ -266,7 +294,7 @@ export default function App() {
           }).then(async res => {
             if (!res.ok) {
               const errorText = await res.text();
-              throw new Error(`Serper Images Error: ${res.status} ${errorText}`);
+              throw new Error(`Serper Images Error: ${res.status} ${errorText.substring(0, 50)}`);
             }
             return res.json();
           });
@@ -283,6 +311,7 @@ export default function App() {
                 imageUrl: item.imageUrl
               }));
             setResults(filteredResults);
+            if (filteredResults.length > 0) hasAnyResults = true;
           }
 
           if (imageData.images && imageData.images.length > 0) {
@@ -294,10 +323,12 @@ export default function App() {
                 link: img.link
               }));
             setImages(filteredImages);
+            if (filteredImages.length > 0) hasAnyResults = true;
           }
           
           if (data.answerBox) {
             setAnswer(data.answerBox.snippet || data.answerBox.answer || null);
+            hasAnyResults = true;
           } 
           
           if (data.knowledgeGraph && !currentKg) {
@@ -306,6 +337,7 @@ export default function App() {
               currentKg.imageUrl = imageData.images[0].imageUrl;
             }
             setKnowledgePanel(currentKg);
+            hasAnyResults = true;
           }
           serperSuccess = true;
         } catch (serperErr) {
@@ -315,10 +347,14 @@ export default function App() {
       }
 
       if (!serperSuccess) {
+        if (!geminiKey) {
+          throw new Error("Gemini API Key is missing. Please set GEMINI_API_KEY in settings.");
+        }
+
         // Fallback to Gemini with Streaming for faster perceived performance
-        const responseStream = await genAI.models.generateContentStream({
+        const responseStream = await ai.models.generateContentStream({
           model: "gemini-3-flash-preview",
-          contents: activeQuery,
+          contents: [{ role: 'user', parts: [{ text: activeQuery }] }],
           config: {
             systemInstruction: "You are San Sloud, a highly precise and accurate general search engine. You MUST use the googleSearch tool to find EXACT, real-world information, websites, and factual data for the user's query. If the user searches for a website like 'YouTube' or 'Facebook', provide the direct link and a brief description. Do not hallucinate. Format your response beautifully using markdown.",
             tools: [{ googleSearch: {} }],
@@ -356,9 +392,9 @@ export default function App() {
       // AI Knowledge Panel Fallback (Run if no KG found so far)
       if (!currentKg) {
         try {
-          const aiPanelResponse = await genAI.models.generateContent({
+          const aiPanelResponse = await ai.models.generateContent({
             model: "gemini-3-flash-preview",
-            contents: `Create a structured knowledge panel for the query: "${activeQuery}". 
+            contents: [{ role: 'user', parts: [{ text: `Create a structured knowledge panel for the query: "${activeQuery}". 
             Provide a comprehensive, factual, and professional summary of this topic.
             Return a JSON object with exactly these fields:
             - title: The name or topic
@@ -367,7 +403,7 @@ export default function App() {
             - imageUrl: A direct public URL to a high-quality image related to this topic. Use a reliable source like Wikipedia or a high-quality placeholder if unknown.
             - attributes: A small object with 4-6 key facts as key-value pairs.
             
-            Return ONLY the raw JSON object. Do not include markdown formatting or backticks.`,
+            Return ONLY the raw JSON object. Do not include markdown formatting or backticks.` }] }],
             config: {
               responseMimeType: "application/json",
               tools: [{ googleSearch: {} }]
@@ -407,9 +443,18 @@ export default function App() {
       } else {
         setIsGeneratingKg(false);
       }
-    } catch (err) {
+
+      // Final check: if we have no results, no answer, and no knowledge panel, it's a failed search
+      if (results.length === 0 && !answer && !knowledgePanel && !currentKg) {
+        if (!serperSuccess && !geminiKey) {
+          setError("Search failed: Serper API is not returning results and Gemini API Key is missing. Please check your API keys in settings.");
+        } else {
+          setError("No results found for this query. Please try different keywords.");
+        }
+      }
+    } catch (err: any) {
       console.error("Search error:", err);
-      setError("Failed to fetch results. Please check your connection or API key.");
+      setError(err.message || "Failed to fetch results. Please check your connection or API key.");
     } finally {
       setIsSearching(false);
       setIsGeneratingKg(false); // Safety net
@@ -503,6 +548,44 @@ export default function App() {
             Copy App URL
           </button>
           <div className="flex items-center gap-3">
+            <div className="flex flex-col items-end group/status relative">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-[10px] font-medium text-neutral-500 uppercase tracking-tighter">System Active</span>
+              </div>
+              <span className="text-[9px] text-neutral-600 font-mono">v1.3.6 • Stable</span>
+              
+              {/* Tooltip */}
+              <div className="absolute top-full right-0 mt-2 w-48 p-3 bg-black border border-white/10 rounded-lg text-[10px] text-neutral-400 opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all z-50 shadow-2xl pointer-events-none">
+                <p className="mb-2">This is the development preview. For permanent access, use your connected domain or Shared App URL.</p>
+                <div className="pt-2 border-t border-white/5 space-y-1">
+                  <div className="flex justify-between">
+                    <span>Gemini API:</span>
+                    <div className="flex flex-col items-end">
+                      <span className={process.env.GEMINI_API_KEY ? "text-green-500" : "text-red-500"}>
+                        {process.env.GEMINI_API_KEY ? "Detected" : "Missing"}
+                      </span>
+                      {!process.env.GEMINI_API_KEY && (
+                        <a 
+                          href="https://aistudio.google.com/app/apikey" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[8px] text-blue-400 hover:underline mt-0.5"
+                        >
+                          Get Free Key →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Serper API:</span>
+                    <span className={(process.env.VITE_SERPER_API_KEY || import.meta.env.VITE_SERPER_API_KEY || '8eb3b36eaebc77d5d951cb868e6a545fa253403c') ? "text-green-500" : "text-red-500"}>
+                      {(process.env.VITE_SERPER_API_KEY || import.meta.env.VITE_SERPER_API_KEY) ? "Detected" : "Detected (Hardcoded)"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
             <button 
               onClick={() => {
                 // Aggressive cache clearing and reload
