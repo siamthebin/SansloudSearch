@@ -31,10 +31,10 @@ const KnowledgePanelComponent = ({ panel, onAttributeClick }: { panel: any, onAt
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="w-full bg-[#0A0A0A] border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
+      className="w-full bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl overflow-hidden shadow-2xl"
     >
       {(panel.imageUrl || panel.image) && (
-        <div className="w-full aspect-square overflow-hidden bg-neutral-900">
+        <div className="w-full aspect-square overflow-hidden bg-white/30">
           <img 
             src={panel.imageUrl || panel.image} 
             alt={panel.title} 
@@ -47,25 +47,25 @@ const KnowledgePanelComponent = ({ panel, onAttributeClick }: { panel: any, onAt
         </div>
       )}
       <div className="p-6">
-        <h2 className="text-2xl font-bold text-white mb-1">
+        <h2 className="text-2xl font-bold text-blue-950 mb-1">
           {panel.title}
           {panel.isAiGenerated && (
-            <Sparkles size={16} className="inline-block ml-2 text-blue-400" />
+            <Sparkles size={16} className="inline-block ml-2 text-blue-600" />
           )}
         </h2>
         {panel.type && (
-          <p className="text-sm text-neutral-500 mb-4">{panel.type}</p>
+          <p className="text-sm text-blue-600 mb-4">{panel.type}</p>
         )}
         
         {panel.description && (
-          <p className="text-sm text-neutral-300 leading-relaxed mb-6">
+          <p className="text-sm text-blue-800 leading-relaxed mb-6">
             {panel.description}
             {panel.descriptionLink && (
               <a 
                 href={panel.descriptionLink} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:underline ml-1"
+                className="text-blue-600 hover:underline ml-1"
               >
                 Wikipedia
               </a>
@@ -74,13 +74,13 @@ const KnowledgePanelComponent = ({ panel, onAttributeClick }: { panel: any, onAt
         )}
 
         {panel.attributes && Object.keys(panel.attributes).length > 0 && (
-          <div className="space-y-4 border-t border-white/5 pt-6">
+          <div className="space-y-4 border-t border-white/30 pt-6">
             {Object.entries(panel.attributes).map(([key, value]: [string, any]) => (
               <div key={key} className="text-sm">
-                <span className="font-semibold text-neutral-400 mr-2">{key}:</span>
+                <span className="font-semibold text-blue-700 mr-2">{key}:</span>
                 <button 
                   onClick={() => onAttributeClick(String(value))}
-                  className="text-blue-400 hover:underline text-left"
+                  className="text-blue-600 hover:underline text-left"
                 >
                   {String(value)}
                 </button>
@@ -94,7 +94,7 @@ const KnowledgePanelComponent = ({ panel, onAttributeClick }: { panel: any, onAt
             href={panel.website} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="mt-6 flex items-center justify-center gap-2 w-full py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-white transition-all"
+            className="mt-6 flex items-center justify-center gap-2 w-full py-2.5 bg-white/30 hover:bg-white/40 border border-white/40 rounded-xl text-sm font-medium text-blue-950 transition-all"
           >
             Official Website
             <ExternalLink size={14} />
@@ -501,9 +501,9 @@ export default function App() {
 
   // Quick Apps Data
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center text-neutral-200 font-sans">
+    <div className="min-h-screen bg-transparent flex flex-col items-center text-blue-900 font-sans">
       {/* Navigation / Header */}
-      <header className="w-full px-6 py-4 flex justify-between items-center z-50 border-b border-white/5 bg-black/50 backdrop-blur-md sticky top-0">
+      <header className="w-full px-6 py-4 flex justify-between items-center z-50 border-b border-white/30 bg-transparent/50 backdrop-blur-md sticky top-0">
         <div className="flex items-center gap-3 group cursor-pointer" onClick={() => {
           setResults([]);
           setImages([]);
@@ -515,7 +515,7 @@ export default function App() {
           <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black font-bold text-lg shadow-[0_0_15px_rgba(255,255,255,0.3)] group-hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-all relative">
             S
           </div>
-          <span className="font-sans font-semibold text-xl tracking-tight text-white group-hover:text-blue-400 transition-colors">San Sloud</span>
+          <span className="font-sans font-semibold text-xl tracking-tight text-blue-950 group-hover:text-blue-600 transition-colors">San Sloud</span>
         </div>
         <div className="flex items-center gap-6">
           <button 
@@ -523,7 +523,7 @@ export default function App() {
               navigator.clipboard.writeText(window.location.href);
               alert("App URL copied! Use this link in your phone's browser.");
             }}
-            className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-xs font-medium text-neutral-400 hover:text-white transition-all"
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/30 hover:bg-white/40 border border-white/40 rounded-full text-xs font-medium text-blue-700 hover:text-blue-950 transition-all"
           >
             <ExternalLink size={12} />
             Copy App URL
@@ -532,14 +532,14 @@ export default function App() {
             <div className="flex flex-col items-end group/status relative">
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-medium text-neutral-500 uppercase tracking-tighter">System Active</span>
+                <span className="text-[10px] font-medium text-blue-600 uppercase tracking-tighter">System Active</span>
               </div>
-              <span className="text-[9px] text-neutral-600 font-mono">v1.3.6 • Stable</span>
+              <span className="text-[9px] text-blue-500 font-mono">v1.3.6 • Stable</span>
               
               {/* Tooltip */}
-              <div className="absolute top-full right-0 mt-2 w-48 p-3 bg-black border border-white/10 rounded-lg text-[10px] text-neutral-400 opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all z-50 shadow-2xl pointer-events-none">
+              <div className="absolute top-full right-0 mt-2 w-48 p-3 bg-transparent border border-white/40 rounded-lg text-[10px] text-blue-700 opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all z-50 shadow-2xl pointer-events-none">
                 <p className="mb-2">This is the development preview. For permanent access, use your connected domain or Shared App URL.</p>
-                <div className="pt-2 border-t border-white/5 space-y-1">
+                <div className="pt-2 border-t border-white/30 space-y-1">
                   <div className="flex justify-between">
                     <span>Gemini API:</span>
                     <div className="flex flex-col items-end">
@@ -551,7 +551,7 @@ export default function App() {
                           href="https://aistudio.google.com/app/apikey" 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-[8px] text-blue-400 hover:underline mt-0.5"
+                          className="text-[8px] text-blue-600 hover:underline mt-0.5"
                         >
                           Get Free Key →
                         </a>
@@ -569,20 +569,20 @@ export default function App() {
             </div>
           </div>
           {user ? (
-            <div className="flex items-center gap-3 bg-[#0A0A0A] border border-white/10 px-3 py-1.5 rounded-full">
+            <div className="flex items-center gap-3 bg-white/40 backdrop-blur-xl border border-white/40 px-3 py-1.5 rounded-full">
               <img src={user.avatar || "https://i.postimg.cc/wvXS9k1D/IMG-9128.jpg"} alt="Avatar" className="w-6 h-6 rounded-full object-cover" referrerPolicy="no-referrer" />
-              <span className="text-sm font-medium text-white">{user.name || 'User'}</span>
-              <button onClick={() => setUser(null)} className="text-xs text-neutral-500 hover:text-white transition-colors ml-2">Logout</button>
+              <span className="text-sm font-medium text-blue-950">{user.name || 'User'}</span>
+              <button onClick={() => setUser(null)} className="text-xs text-blue-600 hover:text-blue-950 transition-colors ml-2">Logout</button>
             </div>
           ) : (
             <button
               onClick={() => setShowLoginModal(true)}
-              className="px-4 py-1.5 bg-white text-black text-sm font-medium rounded-md hover:bg-neutral-200 transition-all"
+              className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-neutral-200 transition-all"
             >
               Sign in
             </button>
           )}
-          <button className="p-1.5 text-neutral-500 hover:text-white transition-colors">
+          <button className="p-1.5 text-blue-600 hover:text-blue-950 transition-colors">
             <Menu size={20} />
           </button>
         </div>
@@ -598,10 +598,10 @@ export default function App() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center mb-12"
             >
-              <h1 className="font-sans font-bold text-5xl md:text-7xl mb-6 tracking-tighter text-white">
+              <h1 className="font-sans font-bold text-5xl md:text-7xl mb-6 tracking-tighter text-blue-950">
                 Search the Web.
               </h1>
-              <p className="text-neutral-400 text-lg max-w-md mx-auto">
+              <p className="text-blue-700 text-lg max-w-md mx-auto">
                 San Sloud Search. Get exact results, direct links, and AI-powered insights instantly.
               </p>
             </motion.div>
@@ -611,9 +611,9 @@ export default function App() {
         {/* Search Bar Container */}
         <div className={`w-full transition-all duration-500 ${results.length || answer || isSearching ? 'mt-0' : 'mt-0'}`}>
           <form onSubmit={handleSearch} className="relative group">
-            <div className="relative flex items-center bg-[#0A0A0A] rounded-xl border border-neutral-800 overflow-hidden shadow-sm focus-within:border-neutral-500 transition-all">
-              <div className="pl-5 text-neutral-500">
-                <Search size={20} className="group-focus-within:text-white transition-colors" />
+            <div className="relative flex items-center bg-white/40 backdrop-blur-xl rounded-xl border border-white/50 overflow-hidden shadow-sm focus-within:border-neutral-500 transition-all">
+              <div className="pl-5 text-blue-600">
+                <Search size={20} className="group-focus-within:text-blue-950 transition-colors" />
               </div>
               <input
                 ref={searchInputRef}
@@ -622,13 +622,13 @@ export default function App() {
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => setShowHistory(true)}
                 placeholder="Search anything..."
-                className="w-full py-4 px-4 text-lg bg-transparent border-none focus:ring-0 outline-none text-white placeholder-neutral-600 font-sans"
+                className="w-full py-4 px-4 text-lg bg-transparent border-none focus:ring-0 outline-none text-blue-950 placeholder-neutral-600 font-sans"
               />
               <div className="flex items-center gap-2 pr-2">
                 <button
                   type="submit"
                   disabled={isSearching || !query.trim()}
-                  className="p-2 bg-white text-black rounded-lg hover:bg-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 bg-blue-600 text-white rounded-lg hover:bg-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSearching ? (
                     <motion.div
@@ -650,7 +650,7 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 className="absolute -bottom-6 left-0 right-0 flex justify-center"
               >
-                <span className="text-[10px] text-blue-400 font-medium flex items-center gap-1">
+                <span className="text-[10px] text-blue-600 font-medium flex items-center gap-1">
                   <Sparkles size={10} className="animate-pulse" />
                   AI is generating a knowledge summary...
                 </span>
@@ -664,16 +664,16 @@ export default function App() {
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 5 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-[#0A0A0A] rounded-xl border border-neutral-800 overflow-hidden z-[60] shadow-2xl"
+                  className="absolute top-full left-0 right-0 mt-2 bg-white/40 backdrop-blur-xl rounded-xl border border-white/50 overflow-hidden z-[60] shadow-2xl"
                 >
-                  <div className="p-4 border-b border-neutral-800 flex justify-between items-center bg-black/50">
-                    <span className="text-xs font-medium text-neutral-500 flex items-center gap-2">
+                  <div className="p-4 border-b border-white/50 flex justify-between items-center bg-transparent/50">
+                    <span className="text-xs font-medium text-blue-600 flex items-center gap-2">
                       <Clock size={14} /> Recent Searches
                     </span>
                     <button
                       type="button"
                       onClick={clearHistory}
-                      className="text-xs text-neutral-500 hover:text-white transition-colors"
+                      className="text-xs text-blue-600 hover:text-blue-950 transition-colors"
                     >
                       Clear All
                     </button>
@@ -687,10 +687,10 @@ export default function App() {
                           setQuery(item.query);
                           handleSearch(undefined, item.query);
                         }}
-                        className="w-full px-5 py-3 text-left hover:bg-neutral-900 flex items-center justify-between group transition-colors"
+                        className="w-full px-5 py-3 text-left hover:bg-white/30 flex items-center justify-between group transition-colors"
                       >
-                        <span className="text-neutral-300 group-hover:text-white transition-colors">{item.query}</span>
-                        <ChevronRight size={16} className="text-neutral-600 group-hover:text-white transition-colors" />
+                        <span className="text-blue-800 group-hover:text-blue-950 transition-colors">{item.query}</span>
+                        <ChevronRight size={16} className="text-blue-500 group-hover:text-blue-950 transition-colors" />
                       </button>
                     ))}
                   </div>
@@ -710,9 +710,9 @@ export default function App() {
         <div className="w-full mt-16">
           {isSearching && (
             <div className="space-y-6 w-full max-w-2xl mx-auto">
-              <div className="h-3 bg-neutral-900 rounded-full w-full animate-pulse"></div>
-              <div className="h-3 bg-neutral-900 rounded-full w-5/6 animate-pulse"></div>
-              <div className="h-3 bg-neutral-900 rounded-full w-4/6 animate-pulse"></div>
+              <div className="h-3 bg-white/30 rounded-full w-full animate-pulse"></div>
+              <div className="h-3 bg-white/30 rounded-full w-5/6 animate-pulse"></div>
+              <div className="h-3 bg-white/30 rounded-full w-4/6 animate-pulse"></div>
             </div>
           )}
 
@@ -726,22 +726,22 @@ export default function App() {
           <div className="flex flex-col lg:flex-row gap-8 items-start w-full">
           {/* Mobile Knowledge Panel (Top) */}
           {(knowledgePanel || isGeneratingKg) && (
-            <div className="block lg:hidden w-full mb-10 p-4 bg-white/5 rounded-3xl border border-white/10 shadow-2xl">
+            <div className="block lg:hidden w-full mb-10 p-4 bg-white/30 rounded-3xl border border-white/40 shadow-2xl">
               <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-2">
-                  <Sparkles size={14} className="text-blue-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">AI Knowledge Summary</span>
+                  <Sparkles size={14} className="text-blue-600" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">AI Knowledge Summary</span>
                 </div>
               </div>
               {isGeneratingKg ? (
-                  <div className="w-full bg-[#0A0A0A] border border-white/10 rounded-2xl p-6 animate-pulse">
-                    <div className="h-48 bg-neutral-900 rounded-xl mb-4"></div>
-                    <div className="h-6 bg-neutral-900 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-neutral-900 rounded w-1/2 mb-4"></div>
+                  <div className="w-full bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 animate-pulse">
+                    <div className="h-48 bg-white/30 rounded-xl mb-4"></div>
+                    <div className="h-6 bg-white/30 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-white/30 rounded w-1/2 mb-4"></div>
                     <div className="space-y-2">
-                      <div className="h-3 bg-neutral-900 rounded w-full"></div>
-                      <div className="h-3 bg-neutral-900 rounded w-full"></div>
-                      <div className="h-3 bg-neutral-900 rounded w-2/3"></div>
+                      <div className="h-3 bg-white/30 rounded w-full"></div>
+                      <div className="h-3 bg-white/30 rounded w-full"></div>
+                      <div className="h-3 bg-white/30 rounded w-2/3"></div>
                     </div>
                   </div>
                 ) : (
@@ -764,21 +764,21 @@ export default function App() {
                   className="vercel-card p-6 md:p-8 rounded-xl w-full"
                 >
                   <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2 text-white">
-                      <Sparkles size={18} className="text-blue-400" />
+                    <div className="flex items-center gap-2 text-blue-950">
+                      <Sparkles size={18} className="text-blue-600" />
                       <span className="text-sm font-medium">{isReading ? 'AI is reading the page...' : 'AI Reader Mode'}</span>
                     </div>
                     {!isReading && (
-                      <button onClick={() => setAnswer(null)} className="text-neutral-500 hover:text-white transition-colors">
+                      <button onClick={() => setAnswer(null)} className="text-blue-600 hover:text-blue-950 transition-colors">
                         <X size={18} />
                       </button>
                     )}
                   </div>
                   {isReading ? (
                     <div className="space-y-4">
-                      <div className="h-3 bg-neutral-900 rounded-full w-full animate-pulse"></div>
-                      <div className="h-3 bg-neutral-900 rounded-full w-5/6 animate-pulse"></div>
-                      <div className="h-3 bg-neutral-900 rounded-full w-4/6 animate-pulse"></div>
+                      <div className="h-3 bg-white/30 rounded-full w-full animate-pulse"></div>
+                      <div className="h-3 bg-white/30 rounded-full w-5/6 animate-pulse"></div>
+                      <div className="h-3 bg-white/30 rounded-full w-4/6 animate-pulse"></div>
                     </div>
                   ) : (
                     <div className="markdown-body text-base">
@@ -790,7 +790,7 @@ export default function App() {
 
               {images.length > 0 && (
                 <div className="w-full">
-                  <div className="flex items-center gap-2 text-neutral-500 mb-4 px-1">
+                  <div className="flex items-center gap-2 text-blue-600 mb-4 px-1">
                     <Sparkles size={16} className="text-yellow-500" />
                     <span className="text-sm font-medium">Images</span>
                   </div>
@@ -804,7 +804,7 @@ export default function App() {
                         className="group cursor-pointer"
                         onClick={() => window.open(img.link, '_blank')}
                       >
-                        <div className="aspect-square rounded-xl overflow-hidden bg-neutral-900 border border-white/5 mb-1">
+                        <div className="aspect-square rounded-xl overflow-hidden bg-white/30 border border-white/30 mb-1">
                           <img 
                             src={img.imageUrl} 
                             alt={img.title} 
@@ -812,7 +812,7 @@ export default function App() {
                             referrerPolicy="no-referrer"
                           />
                         </div>
-                        <p className="text-[10px] text-neutral-400 line-clamp-1 px-1">{img.title}</p>
+                        <p className="text-[10px] text-blue-700 line-clamp-1 px-1">{img.title}</p>
                       </motion.div>
                     ))}
                   </div>
@@ -821,7 +821,7 @@ export default function App() {
 
               {results.length > 0 && (
                 <div className="w-full">
-                  <div className="flex items-center gap-2 text-neutral-500 mb-4 px-1">
+                  <div className="flex items-center gap-2 text-blue-600 mb-4 px-1">
                     <Globe size={16} />
                     <span className="text-sm font-medium">Web Sources</span>
                   </div>
@@ -837,7 +837,7 @@ export default function App() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.05 }}
-                          className="group block w-full text-left p-5 bg-[#101828]/50 border border-white/5 rounded-2xl hover:bg-[#101828] hover:border-white/10 transition-all"
+                          className="group block w-full text-left p-5 bg-white/20 border border-white/30 rounded-2xl hover:bg-white/30 hover:border-white/40 transition-all"
                         >
                           <div className="flex gap-4">
                             <div className="flex-1 flex flex-col gap-2">
@@ -846,12 +846,12 @@ export default function App() {
                                   <img 
                                     src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`} 
                                     alt="favicon" 
-                                    className="w-4 h-4 object-contain rounded-full bg-white/10"
+                                    className="w-4 h-4 object-contain rounded-full bg-white/40"
                                     onError={(e) => {
                                       (e.target as HTMLImageElement).style.display = 'none';
                                     }}
                                   />
-                                  <span className="text-xs font-medium text-neutral-400">
+                                  <span className="text-xs font-medium text-blue-700">
                                     {domain}
                                   </span>
                                 </div>
@@ -861,27 +861,27 @@ export default function App() {
                                       e.stopPropagation();
                                       handleReadWithAI(result.uri);
                                     }}
-                                    className="p-1.5 bg-white/5 rounded-full text-neutral-500 hover:text-blue-400 hover:bg-white/10 transition-all"
+                                    className="p-1.5 bg-white/30 rounded-full text-blue-600 hover:text-blue-600 hover:bg-white/40 transition-all"
                                     title="AI Summary"
                                   >
                                     <Sparkles size={14} />
                                   </button>
-                                  <div className="p-1.5 bg-white/5 rounded-full text-neutral-500 group-hover:text-white transition-all">
+                                  <div className="p-1.5 bg-white/30 rounded-full text-blue-600 group-hover:text-blue-950 transition-all">
                                     <ExternalLink size={14} />
                                   </div>
                                 </div>
                               </div>
-                              <h3 className="text-lg font-medium text-neutral-200 group-hover:text-white transition-colors">
+                              <h3 className="text-lg font-medium text-blue-900 group-hover:text-blue-950 transition-colors">
                                 {result.title}
                               </h3>
                               {result.snippet && (
-                                <p className="text-sm text-neutral-300 line-clamp-2 leading-relaxed">
+                                <p className="text-sm text-blue-800 line-clamp-2 leading-relaxed">
                                   {result.snippet}
                                 </p>
                               )}
                             </div>
                             {result.imageUrl && (
-                              <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-white/5">
+                              <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-white/30">
                                 <img 
                                   src={result.imageUrl} 
                                   alt="thumbnail" 
@@ -903,14 +903,14 @@ export default function App() {
             {(knowledgePanel || isGeneratingKg) && (
               <div className="hidden lg:block w-[350px] flex-shrink-0 sticky top-24">
                 {isGeneratingKg ? (
-                  <div className="w-full bg-[#0A0A0A] border border-white/10 rounded-2xl p-6 animate-pulse">
-                    <div className="h-48 bg-neutral-900 rounded-xl mb-4"></div>
-                    <div className="h-6 bg-neutral-900 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-neutral-900 rounded w-1/2 mb-4"></div>
+                  <div className="w-full bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 animate-pulse">
+                    <div className="h-48 bg-white/30 rounded-xl mb-4"></div>
+                    <div className="h-6 bg-white/30 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-white/30 rounded w-1/2 mb-4"></div>
                     <div className="space-y-2">
-                      <div className="h-3 bg-neutral-900 rounded w-full"></div>
-                      <div className="h-3 bg-neutral-900 rounded w-full"></div>
-                      <div className="h-3 bg-neutral-900 rounded w-2/3"></div>
+                      <div className="h-3 bg-white/30 rounded w-full"></div>
+                      <div className="h-3 bg-white/30 rounded w-full"></div>
+                      <div className="h-3 bg-white/30 rounded w-2/3"></div>
                     </div>
                   </div>
                 ) : (
@@ -936,26 +936,26 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-transparent/80 backdrop-blur-sm"
               onClick={() => setShowLoginModal(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative bg-[#0A0A0A] border border-neutral-800 p-8 rounded-xl shadow-2xl w-full max-w-sm flex flex-col items-center text-center"
+              className="relative bg-white/40 backdrop-blur-xl border border-white/50 p-8 rounded-xl shadow-2xl w-full max-w-sm flex flex-col items-center text-center"
             >
               <button
                 onClick={() => setShowLoginModal(false)}
-                className="absolute top-4 right-4 text-neutral-500 hover:text-white transition-colors"
+                className="absolute top-4 right-4 text-blue-600 hover:text-blue-950 transition-colors"
               >
                 <X size={20} />
               </button>
               <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black font-bold text-2xl mb-6">
                 S
               </div>
-              <h2 className="text-2xl font-sans font-semibold text-white mb-2 tracking-tight">Welcome Back</h2>
-              <p className="text-neutral-400 text-sm mb-8">Sign in to sync your search history and preferences.</p>
+              <h2 className="text-2xl font-sans font-semibold text-blue-950 mb-2 tracking-tight">Welcome Back</h2>
+              <p className="text-blue-700 text-sm mb-8">Sign in to sync your search history and preferences.</p>
               
               <div className="w-full">
                 <LoginWithSanscounts onLoginSuccess={(userData) => {

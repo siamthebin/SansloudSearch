@@ -8,30 +8,30 @@
 
 @layer base {
   body {
-    @apply bg-black text-neutral-200 font-sans antialiased selection:bg-white/30 selection:text-black;
+    @apply bg-gradient-to-br from-[#aee4ff] to-[#6aa7df] min-h-screen text-blue-950 font-sans antialiased selection:bg-white/50 selection:text-blue-900;
   }
 }
 
 .vercel-card {
-  @apply bg-[#0A0A0A] border border-white/10 shadow-sm;
+  @apply bg-white/40 backdrop-blur-xl border border-white/40 shadow-xl;
 }
 
 /* Markdown Styles for Vercel Theme */
 .markdown-body {
-  @apply font-sans text-neutral-400;
+  @apply font-sans text-blue-900;
 }
 .markdown-body p { @apply mb-5 last:mb-0 leading-relaxed; }
 .markdown-body ul { @apply list-disc pl-5 mb-5 space-y-2; }
 .markdown-body ol { @apply list-decimal pl-5 mb-5 space-y-2; }
-.markdown-body h1, .markdown-body h2, .markdown-body h3 { @apply font-sans font-semibold mb-4 mt-8 text-neutral-100 tracking-tight; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3 { @apply font-sans font-semibold mb-4 mt-8 text-blue-950 tracking-tight; }
 .markdown-body h1 { @apply text-2xl; }
 .markdown-body h2 { @apply text-xl; }
 .markdown-body h3 { @apply text-lg; }
-.markdown-body code { @apply bg-neutral-900 text-neutral-200 px-1.5 py-0.5 rounded-md text-sm font-mono border border-white/10; }
-.markdown-body pre { @apply bg-black text-neutral-200 p-5 rounded-xl overflow-x-auto mb-6 border border-white/10; }
+.markdown-body code { @apply bg-white/50 text-blue-900 px-1.5 py-0.5 rounded-md text-sm font-mono border border-white/30; }
+.markdown-body pre { @apply bg-white/50 text-blue-900 p-5 rounded-xl overflow-x-auto mb-6 border border-white/30 shadow-inner; }
 .markdown-body pre code { @apply bg-transparent text-inherit p-0 border-none; }
-.markdown-body a { @apply text-neutral-100 underline underline-offset-4 decoration-neutral-700 hover:decoration-neutral-400 transition-all; }
-.markdown-body blockquote { @apply border-l-2 border-neutral-700 pl-6 italic text-neutral-500 my-6; }
+.markdown-body a { @apply text-blue-950 underline underline-offset-4 decoration-blue-400 hover:decoration-blue-800 transition-all; }
+.markdown-body blockquote { @apply border-l-2 border-blue-400 pl-6 italic text-blue-700 my-6; }
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
