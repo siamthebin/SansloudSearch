@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { Search, Globe, Clock, ArrowRight, Sparkles, X, Menu, ExternalLink, ChevronRight, Home, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Search, Globe, Clock, ArrowRight, Sparkles, X, Menu, ExternalLink, ChevronRight, Home, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 import { LoginWithSanscounts } from './components/LoginWithSanscounts';
@@ -31,43 +31,44 @@ const KnowledgePanelComponent = ({ panel, onAttributeClick }: { panel: any, onAt
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="w-full bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl overflow-hidden shadow-2xl"
+      className="w-full bg-white/50 backdrop-blur-2xl border border-white/70 rounded-3xl overflow-hidden shadow-2xl shadow-blue-100/50"
     >
       {(panel.imageUrl || panel.image) && (
-        <div className="w-full aspect-square overflow-hidden bg-white/30">
+        <div className="w-full aspect-[4/3] overflow-hidden bg-white/30 relative">
           <img 
             src={panel.imageUrl || panel.image} 
             alt={panel.title} 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
             referrerPolicy="no-referrer"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent pointer-events-none"></div>
         </div>
       )}
-      <div className="p-6">
-        <h2 className="text-2xl font-bold text-blue-950 mb-1">
+      <div className="p-8">
+        <h2 className="text-3xl font-bold text-blue-950 mb-1 tracking-tight">
           {panel.title}
           {panel.isAiGenerated && (
-            <Sparkles size={16} className="inline-block ml-2 text-blue-600" />
+            <Sparkles size={20} className="inline-block ml-3 text-sky-500 animate-pulse" />
           )}
         </h2>
         {panel.type && (
-          <p className="text-sm text-blue-600 mb-4">{panel.type}</p>
+          <p className="text-sm font-bold text-sky-600 mb-6 uppercase tracking-widest">{panel.type}</p>
         )}
         
         {panel.description && (
-          <p className="text-sm text-blue-800 leading-relaxed mb-6">
+          <p className="text-base text-blue-800/90 leading-relaxed mb-8">
             {panel.description}
             {panel.descriptionLink && (
               <a 
                 href={panel.descriptionLink} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline ml-1"
+                className="text-sky-600 font-bold hover:underline ml-2"
               >
-                Wikipedia
+                Read More
               </a>
             )}
           </p>
@@ -512,10 +513,10 @@ export default function App() {
           setKnowledgePanel(null);
           setError(null);
         }}>
-          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black font-bold text-lg shadow-[0_0_15px_rgba(255,255,255,0.3)] group-hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-all relative">
+          <div className="w-9 h-9 rounded-xl bg-white/90 flex items-center justify-center text-sky-600 font-bold text-xl shadow-[0_0_20px_rgba(255,255,255,0.8)] group-hover:scale-110 transition-all relative ring-2 ring-white/20">
             S
           </div>
-          <span className="font-sans font-semibold text-xl tracking-tight text-blue-950 group-hover:text-blue-600 transition-colors">San Sloud</span>
+          <span className="font-sans font-bold text-2xl tracking-tight text-blue-950 drop-shadow-sm group-hover:text-blue-700 transition-colors">San Sloud</span>
         </div>
         <div className="flex items-center gap-6">
           <button 
@@ -523,61 +524,23 @@ export default function App() {
               navigator.clipboard.writeText(window.location.href);
               alert("App URL copied! Use this link in your phone's browser.");
             }}
-            className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/30 hover:bg-white/40 border border-white/40 rounded-full text-xs font-medium text-blue-700 hover:text-blue-950 transition-all"
+            className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/40 hover:bg-white/60 border border-white/60 rounded-full text-xs font-bold text-blue-600 hover:text-sky-700 transition-all shadow-sm"
           >
-            <ExternalLink size={12} />
+            <ExternalLink size={14} />
             Copy App URL
           </button>
           <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end group/status relative">
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-medium text-blue-600 uppercase tracking-tighter">System Active</span>
-              </div>
-              <span className="text-[9px] text-blue-500 font-mono">v1.3.6 • Stable</span>
-              
-              {/* Tooltip */}
-              <div className="absolute top-full right-0 mt-2 w-48 p-3 bg-transparent border border-white/40 rounded-lg text-[10px] text-blue-700 opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all z-50 shadow-2xl pointer-events-none">
-                <p className="mb-2">This is the development preview. For permanent access, use your connected domain or Shared App URL.</p>
-                <div className="pt-2 border-t border-white/30 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Gemini API:</span>
-                    <div className="flex flex-col items-end">
-                      <span className={process.env.GEMINI_API_KEY ? "text-green-500" : "text-red-500"}>
-                        {process.env.GEMINI_API_KEY ? "Detected" : "Missing"}
-                      </span>
-                      {!process.env.GEMINI_API_KEY && (
-                        <a 
-                          href="https://aistudio.google.com/app/apikey" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-[8px] text-blue-600 hover:underline mt-0.5"
-                        >
-                          Get Free Key →
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Serper API:</span>
-                    <span className={(process.env.VITE_SERPER_API_KEY || import.meta.env.VITE_SERPER_API_KEY || '8eb3b36eaebc77d5d951cb868e6a545fa253403c') ? "text-green-500" : "text-red-500"}>
-                      {(process.env.VITE_SERPER_API_KEY || import.meta.env.VITE_SERPER_API_KEY) ? "Detected" : "Detected (Hardcoded)"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
           {user ? (
-            <div className="flex items-center gap-3 bg-white/40 backdrop-blur-xl border border-white/40 px-3 py-1.5 rounded-full">
-              <img src={user.avatar || "https://i.postimg.cc/wvXS9k1D/IMG-9128.jpg"} alt="Avatar" className="w-6 h-6 rounded-full object-cover" referrerPolicy="no-referrer" />
-              <span className="text-sm font-medium text-blue-950">{user.name || 'User'}</span>
-              <button onClick={() => setUser(null)} className="text-xs text-blue-600 hover:text-blue-950 transition-colors ml-2">Logout</button>
+            <div className="flex items-center gap-3 bg-white/50 backdrop-blur-xl border border-white/60 px-4 py-2 rounded-2xl shadow-sm">
+              <img src={user.avatar || "https://i.postimg.cc/wvXS9k1D/IMG-9128.jpg"} alt="Avatar" className="w-7 h-7 rounded-full object-cover ring-2 ring-sky-200" referrerPolicy="no-referrer" />
+              <span className="text-sm font-bold text-blue-950">{user.name || 'User'}</span>
+              <button onClick={() => setUser(null)} className="text-xs font-bold text-rose-500 hover:text-rose-700 transition-colors ml-2">Logout</button>
             </div>
           ) : (
             <button
               onClick={() => setShowLoginModal(true)}
-              className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-neutral-200 transition-all"
+              className="px-6 py-2 bg-sky-500 text-white text-sm font-bold rounded-xl hover:bg-sky-600 transition-all shadow-lg shadow-sky-200"
             >
               Sign in
             </button>
@@ -598,11 +561,11 @@ export default function App() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center mb-12"
             >
-              <h1 className="font-sans font-bold text-5xl md:text-7xl mb-6 tracking-tighter text-blue-950">
-                Search the Web.
+              <h1 className="font-sans font-black text-6xl md:text-8xl mb-8 tracking-tighter text-blue-950 drop-shadow-sm">
+                San Sloud.
               </h1>
-              <p className="text-blue-700 text-lg max-w-md mx-auto">
-                San Sloud Search. Get exact results, direct links, and AI-powered insights instantly.
+              <p className="text-blue-700/80 text-xl max-w-lg mx-auto font-medium leading-relaxed">
+                Connect with the world through the infinite sky of information.
               </p>
             </motion.div>
           ) : null}
@@ -611,9 +574,9 @@ export default function App() {
         {/* Search Bar Container */}
         <div className={`w-full transition-all duration-500 ${results.length || answer || isSearching ? 'mt-0' : 'mt-0'}`}>
           <form onSubmit={handleSearch} className="relative group">
-            <div className="relative flex items-center bg-white/40 backdrop-blur-xl rounded-xl border border-white/50 overflow-hidden shadow-sm focus-within:border-neutral-500 transition-all">
-              <div className="pl-5 text-blue-600">
-                <Search size={20} className="group-focus-within:text-blue-950 transition-colors" />
+            <div className="relative flex items-center bg-white/60 backdrop-blur-2xl rounded-2xl border border-white/80 overflow-hidden shadow-lg shadow-blue-200/50 focus-within:ring-2 focus-within:ring-sky-300 transition-all">
+              <div className="pl-5 text-sky-500">
+                <Search size={22} className="group-focus-within:text-sky-600 transition-colors" />
               </div>
               <input
                 ref={searchInputRef}
@@ -621,24 +584,24 @@ export default function App() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => setShowHistory(true)}
-                placeholder="Search anything..."
-                className="w-full py-4 px-4 text-lg bg-transparent border-none focus:ring-0 outline-none text-blue-950 placeholder-neutral-600 font-sans"
+                placeholder="Search the infinite sky..."
+                className="w-full py-5 px-4 text-lg bg-transparent border-none focus:ring-0 outline-none text-blue-950 placeholder-blue-300 font-sans font-medium"
               />
-              <div className="flex items-center gap-2 pr-2">
+              <div className="flex items-center gap-2 pr-3">
                 <button
                   type="submit"
                   disabled={isSearching || !query.trim()}
-                  className="p-2 bg-blue-600 text-white rounded-lg hover:bg-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-3 bg-sky-500 text-white rounded-xl hover:bg-sky-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-sky-200"
                 >
                   {isSearching ? (
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
                     >
-                      <Globe size={18} />
+                      <Globe size={20} />
                     </motion.div>
                   ) : (
-                    <ArrowRight size={18} />
+                    <ArrowRight size={20} />
                   )}
                 </button>
               </div>
@@ -761,7 +724,7 @@ export default function App() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="vercel-card p-6 md:p-8 rounded-xl w-full"
+                  className="vercel-card p-6 md:p-10 rounded-3xl w-full border-t-4 border-t-sky-400"
                 >
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2 text-blue-950">
@@ -804,7 +767,7 @@ export default function App() {
                         className="group cursor-pointer"
                         onClick={() => window.open(img.link, '_blank')}
                       >
-                        <div className="aspect-square rounded-xl overflow-hidden bg-white/30 border border-white/30 mb-1">
+                        <div className="aspect-square rounded-2xl overflow-hidden bg-white/40 border border-white/60 mb-2 shadow-sm group-hover:shadow-lg group-hover:shadow-sky-100/50 transition-all">
                           <img 
                             src={img.imageUrl} 
                             alt={img.title} 
@@ -837,7 +800,7 @@ export default function App() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.05 }}
-                          className="group block w-full text-left p-5 bg-white/20 border border-white/30 rounded-2xl hover:bg-white/30 hover:border-white/40 transition-all"
+                          className="group block w-full text-left p-6 bg-white/50 backdrop-blur-xl border border-white/70 rounded-3xl hover:bg-white/70 hover:shadow-2xl hover:shadow-sky-200/50 hover:-translate-y-2 transition-all border-b-4 border-b-transparent hover:border-b-sky-400 shadow-md shadow-blue-100/20"
                         >
                           <div className="flex gap-4">
                             <div className="flex-1 flex flex-col gap-2">
@@ -871,9 +834,9 @@ export default function App() {
                                   </div>
                                 </div>
                               </div>
-                              <h3 className="text-lg font-medium text-blue-900 group-hover:text-blue-950 transition-colors">
-                                {result.title}
-                              </h3>
+              <h3 className="text-xl font-bold text-blue-950 group-hover:text-sky-700 transition-colors tracking-tight">
+                {result.title}
+              </h3>
                               {result.snippet && (
                                 <p className="text-sm text-blue-800 line-clamp-2 leading-relaxed">
                                   {result.snippet}
@@ -881,14 +844,14 @@ export default function App() {
                               )}
                             </div>
                             {result.imageUrl && (
-                              <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-white/30">
-                                <img 
-                                  src={result.imageUrl} 
-                                  alt="thumbnail" 
-                                  className="w-full h-full object-cover"
-                                  referrerPolicy="no-referrer"
-                                />
-                              </div>
+                                <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 border border-white/60 shadow-inner bg-white/20">
+                                  <img 
+                                    src={result.imageUrl} 
+                                    alt="thumbnail" 
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                </div>
                             )}
                           </div>
                         </motion.button>
@@ -943,19 +906,19 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative bg-white/40 backdrop-blur-xl border border-white/50 p-8 rounded-xl shadow-2xl w-full max-w-sm flex flex-col items-center text-center"
+              className="relative bg-white/60 backdrop-blur-2xl border border-white/80 p-10 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] w-full max-w-md flex flex-col items-center text-center overflow-hidden border-b-[6px] border-b-sky-400"
             >
-              <button
-                onClick={() => setShowLoginModal(false)}
-                className="absolute top-4 right-4 text-blue-600 hover:text-blue-950 transition-colors"
-              >
-                <X size={20} />
-              </button>
-              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black font-bold text-2xl mb-6">
-                S
-              </div>
-              <h2 className="text-2xl font-sans font-semibold text-blue-950 mb-2 tracking-tight">Welcome Back</h2>
-              <p className="text-blue-700 text-sm mb-8">Sign in to sync your search history and preferences.</p>
+                <button
+                  onClick={() => setShowLoginModal(false)}
+                  className="absolute top-4 right-4 text-blue-700 hover:text-sky-600 transition-colors p-1"
+                >
+                  <X size={24} />
+                </button>
+                <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-sky-600 font-bold text-3xl mb-6 shadow-lg shadow-sky-100 ring-2 ring-sky-50">
+                  S
+                </div>
+                <h2 className="text-3xl font-sans font-black text-blue-950 mb-3 tracking-tighter">Skybound Welcome</h2>
+                <p className="text-blue-700/80 font-medium text-sm mb-10 px-4">Begin your journey across the infinite sky of information. Your preferences will sync across all horizons.</p>
               
               <div className="w-full">
                 <LoginWithSanscounts onLoginSuccess={(userData) => {
