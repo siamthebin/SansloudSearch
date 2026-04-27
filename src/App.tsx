@@ -578,9 +578,6 @@ export default function App() {
               <h1 className="font-sans font-black text-6xl md:text-8xl mb-8 tracking-tighter text-white drop-shadow-sm">
                 San Sloud.
               </h1>
-              <p className="text-brand-light/70 text-xl max-w-lg mx-auto font-medium leading-relaxed">
-                Connect with the world through the infinite sky of information.
-              </p>
             </motion.div>
           ) : null}
         </AnimatePresence>
