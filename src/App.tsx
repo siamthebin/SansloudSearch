@@ -31,10 +31,10 @@ const KnowledgePanelComponent = ({ panel, onAttributeClick }: { panel: any, onAt
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="w-full bg-white/50 backdrop-blur-2xl border border-white/70 rounded-3xl overflow-hidden shadow-2xl shadow-blue-100/50"
+      className="w-full bg-[#011e38]/50 backdrop-blur-3xl backdrop-blur-2xl border border-brand-cyan/20 rounded-3xl overflow-hidden shadow-2xl shadow-black/30"
     >
       {(panel.imageUrl || panel.image) && (
-        <div className="w-full aspect-[4/3] overflow-hidden bg-white/30 relative">
+        <div className="w-full aspect-[4/3] overflow-hidden bg-[#011e38]/50 backdrop-blur-3xl relative">
           <img 
             src={panel.imageUrl || panel.image} 
             alt={panel.title} 
@@ -48,25 +48,25 @@ const KnowledgePanelComponent = ({ panel, onAttributeClick }: { panel: any, onAt
         </div>
       )}
       <div className="p-8">
-        <h2 className="text-3xl font-bold text-blue-950 mb-1 tracking-tight">
+        <h2 className="text-3xl font-bold text-white mb-1 tracking-tight">
           {panel.title}
           {panel.isAiGenerated && (
-            <Sparkles size={20} className="inline-block ml-3 text-sky-500 animate-pulse" />
+            <Sparkles size={20} className="inline-block ml-3 text-brand-blue animate-pulse" />
           )}
         </h2>
         {panel.type && (
-          <p className="text-sm font-bold text-sky-600 mb-6 uppercase tracking-widest">{panel.type}</p>
+          <p className="text-sm font-bold text-brand-blue mb-6 uppercase tracking-widest">{panel.type}</p>
         )}
         
         {panel.description && (
-          <p className="text-base text-blue-800/90 leading-relaxed mb-8">
+          <p className="text-base text-brand-light/90 leading-relaxed mb-8">
             {panel.description}
             {panel.descriptionLink && (
               <a 
                 href={panel.descriptionLink} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-sky-600 font-bold hover:underline ml-2"
+                className="text-brand-blue font-bold hover:underline ml-2"
               >
                 Read More
               </a>
@@ -75,13 +75,13 @@ const KnowledgePanelComponent = ({ panel, onAttributeClick }: { panel: any, onAt
         )}
 
         {panel.attributes && Object.keys(panel.attributes).length > 0 && (
-          <div className="space-y-4 border-t border-white/30 pt-6">
+          <div className="space-y-4 border-t border-brand-cyan/20 pt-6">
             {Object.entries(panel.attributes).map(([key, value]: [string, any]) => (
               <div key={key} className="text-sm">
-                <span className="font-semibold text-blue-700 mr-2">{key}:</span>
+                <span className="font-semibold text-brand-light/70 mr-2">{key}:</span>
                 <button 
                   onClick={() => onAttributeClick(String(value))}
-                  className="text-blue-600 hover:underline text-left"
+                  className="text-brand-cyan hover:underline text-left"
                 >
                   {String(value)}
                 </button>
@@ -95,7 +95,7 @@ const KnowledgePanelComponent = ({ panel, onAttributeClick }: { panel: any, onAt
             href={panel.website} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="mt-6 flex items-center justify-center gap-2 w-full py-2.5 bg-white/30 hover:bg-white/40 border border-white/40 rounded-xl text-sm font-medium text-blue-950 transition-all"
+            className="mt-6 flex items-center justify-center gap-2 w-full py-2.5 bg-[#011e38]/50 backdrop-blur-3xl hover:bg-[#011e38]/50 backdrop-blur-3xl border border-brand-cyan/20 rounded-xl text-sm font-medium text-white transition-all"
           >
             Official Website
             <ExternalLink size={14} />
@@ -212,12 +212,24 @@ export default function App() {
 
     let currentKg: any = null;
 
-    // Filter for gambling/casino sites
+    // Filter for gambling/betting/casino sites
     const isGamblingSite = (text: string) => {
       if (!text) return false;
-      const gamblingKeywords = ['casino', 'gambling', 'betting', 'juy', 'poker', 'slot', 'jackpot', 'lottery', '1xbet', 'melbet', 'bet365', 'betway', 'parimatch'];
+      const gamblingKeywords = [
+        'casino', 'gambling', 'betting', 'juy', 'poker', 'slot', 'jackpot', 'lottery', 
+        '1xbet', 'melbet', 'bet365', 'betway', 'parimatch', 'mcw', 'babu88', 'baji', 
+        'linebet', 'mostbet', 'megapari', 'dhamaka', 'jeeto', 'khela88', 'velki', 
+        't20exchange', 'cricketbetting', 'wager', 'staking', 'জুয়া', 'জুয়াড়ি', 'বাজি', 'ক্যাসিনো'
+      ];
       return gamblingKeywords.some(keyword => text.toLowerCase().includes(keyword));
     };
+
+    if (isGamblingSite(activeQuery)) {
+      setError("আমাদের অনুসন্ধান ইঞ্জিন জুয়া বা ক্যাসিনো সম্পর্কিত কোনো সাইট প্রদর্শন করে না। অনুগ্রহ করে নিরাপদ ইন্টারনেট ব্যবহারের চেষ্টা করুন।");
+      setIsSearching(false);
+      setIsGeneratingKg(false);
+      return;
+    }
 
     // Special Case: Siam The Bin
     if (activeQuery.toLowerCase().includes('siam the bin')) {
@@ -338,11 +350,13 @@ export default function App() {
             const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(activeQuery)}&utf8=&format=json&origin=*`);
             const wikiData = await wikiRes.json();
             if (wikiData.query && wikiData.query.search && wikiData.query.search.length > 0) {
-              const wikiResults = wikiData.query.search.map((item: any) => ({
-                title: item.title,
-                uri: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
-                snippet: item.snippet.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML tags
-              }));
+              const wikiResults = wikiData.query.search
+                .filter((item: any) => !isGamblingSite(item.title) && !isGamblingSite(item.snippet))
+                .map((item: any) => ({
+                  title: item.title,
+                  uri: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
+                  snippet: item.snippet.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML tags
+                }));
               setResults(wikiResults);
               hasAnyResults = true;
               
@@ -405,7 +419,7 @@ export default function App() {
               const chunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
               if (chunks) {
                 const extractedResults = chunks
-                  .filter((c: any) => c.web)
+                  .filter((c: any) => c.web && !isGamblingSite(c.web.title) && !isGamblingSite(c.web.uri))
                   .map((c: any) => ({
                     title: c.web?.title || 'Untitled',
                     uri: c.web?.uri || '',
@@ -502,9 +516,9 @@ export default function App() {
 
   // Quick Apps Data
   return (
-    <div className="min-h-screen bg-transparent flex flex-col items-center text-blue-900 font-sans">
+    <div className="min-h-screen flex flex-col items-center text-brand-light font-sans">
       {/* Navigation / Header */}
-      <header className="w-full px-6 py-4 flex justify-between items-center z-50 border-b border-white/30 bg-transparent/50 backdrop-blur-md sticky top-0">
+      <header className="w-full px-6 py-4 flex justify-between items-center z-50 border-b border-brand-cyan/20 bg-transparent/50 backdrop-blur-md sticky top-0">
         <div className="flex items-center gap-3 group cursor-pointer" onClick={() => {
           setResults([]);
           setImages([]);
@@ -513,10 +527,10 @@ export default function App() {
           setKnowledgePanel(null);
           setError(null);
         }}>
-          <div className="w-9 h-9 rounded-xl bg-white/90 flex items-center justify-center text-sky-600 font-bold text-xl shadow-[0_0_20px_rgba(255,255,255,0.8)] group-hover:scale-110 transition-all relative ring-2 ring-white/20">
+          <div className="w-9 h-9 rounded-xl bg-[#011e38]/50 backdrop-blur-3xl flex items-center justify-center text-brand-blue font-bold text-xl shadow-[0_0_20px_rgba(255,255,255,0.8)] group-hover:scale-110 transition-all relative ring-2 ring-white/20">
             S
           </div>
-          <span className="font-sans font-bold text-2xl tracking-tight text-blue-950 drop-shadow-sm group-hover:text-blue-700 transition-colors">San Sloud</span>
+          <span className="font-sans font-bold text-2xl tracking-tight text-white drop-shadow-sm group-hover:text-brand-light/70 transition-colors">San Sloud</span>
         </div>
         <div className="flex items-center gap-6">
           <button 
@@ -524,7 +538,7 @@ export default function App() {
               navigator.clipboard.writeText(window.location.href);
               alert("App URL copied! Use this link in your phone's browser.");
             }}
-            className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/40 hover:bg-white/60 border border-white/60 rounded-full text-xs font-bold text-blue-600 hover:text-sky-700 transition-all shadow-sm"
+            className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#011e38]/50 backdrop-blur-3xl hover:bg-[#011e38]/50 backdrop-blur-3xl border border-brand-cyan/20 rounded-full text-xs font-bold text-brand-cyan hover:text-brand-cyan transition-all shadow-sm"
           >
             <ExternalLink size={14} />
             Copy App URL
@@ -532,20 +546,20 @@ export default function App() {
           <div className="flex items-center gap-3">
           </div>
           {user ? (
-            <div className="flex items-center gap-3 bg-white/50 backdrop-blur-xl border border-white/60 px-4 py-2 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-3 bg-[#011e38]/50 backdrop-blur-3xl backdrop-blur-xl border border-brand-cyan/20 px-4 py-2 rounded-2xl shadow-sm">
               <img src={user.avatar || "https://i.postimg.cc/wvXS9k1D/IMG-9128.jpg"} alt="Avatar" className="w-7 h-7 rounded-full object-cover ring-2 ring-sky-200" referrerPolicy="no-referrer" />
-              <span className="text-sm font-bold text-blue-950">{user.name || 'User'}</span>
+              <span className="text-sm font-bold text-white">{user.name || 'User'}</span>
               <button onClick={() => setUser(null)} className="text-xs font-bold text-rose-500 hover:text-rose-700 transition-colors ml-2">Logout</button>
             </div>
           ) : (
             <button
               onClick={() => setShowLoginModal(true)}
-              className="px-6 py-2 bg-sky-500 text-white text-sm font-bold rounded-xl hover:bg-sky-600 transition-all shadow-lg shadow-sky-200"
+              className="px-6 py-2 bg-sky-500 text-white text-sm font-bold rounded-xl hover:bg-sky-600 transition-all shadow-lg shadow-brand-blue/20"
             >
               Sign in
             </button>
           )}
-          <button className="p-1.5 text-blue-600 hover:text-blue-950 transition-colors">
+          <button className="p-1.5 text-brand-cyan hover:text-white transition-colors">
             <Menu size={20} />
           </button>
         </div>
@@ -561,10 +575,10 @@ export default function App() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center mb-12"
             >
-              <h1 className="font-sans font-black text-6xl md:text-8xl mb-8 tracking-tighter text-blue-950 drop-shadow-sm">
+              <h1 className="font-sans font-black text-6xl md:text-8xl mb-8 tracking-tighter text-white drop-shadow-sm">
                 San Sloud.
               </h1>
-              <p className="text-blue-700/80 text-xl max-w-lg mx-auto font-medium leading-relaxed">
+              <p className="text-brand-light/70 text-xl max-w-lg mx-auto font-medium leading-relaxed">
                 Connect with the world through the infinite sky of information.
               </p>
             </motion.div>
@@ -574,9 +588,9 @@ export default function App() {
         {/* Search Bar Container */}
         <div className={`w-full transition-all duration-500 ${results.length || answer || isSearching ? 'mt-0' : 'mt-0'}`}>
           <form onSubmit={handleSearch} className="relative group">
-            <div className="relative flex items-center bg-white/60 backdrop-blur-2xl rounded-2xl border border-white/80 overflow-hidden shadow-lg shadow-blue-200/50 focus-within:ring-2 focus-within:ring-sky-300 transition-all">
-              <div className="pl-5 text-sky-500">
-                <Search size={22} className="group-focus-within:text-sky-600 transition-colors" />
+            <div className="relative flex items-center bg-[#011e38]/50 backdrop-blur-3xl backdrop-blur-2xl rounded-2xl border border-brand-cyan/20 overflow-hidden shadow-lg shadow-black/30 focus-within:ring-2 focus-within:ring-sky-300 transition-all">
+              <div className="pl-5 text-brand-blue">
+                <Search size={22} className="group-focus-within:text-brand-blue transition-colors" />
               </div>
               <input
                 ref={searchInputRef}
@@ -585,13 +599,13 @@ export default function App() {
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => setShowHistory(true)}
                 placeholder="Search the infinite sky..."
-                className="w-full py-5 px-4 text-lg bg-transparent border-none focus:ring-0 outline-none text-blue-950 placeholder-blue-300 font-sans font-medium"
+                className="w-full py-5 px-4 text-lg bg-transparent border-none focus:ring-0 outline-none text-white placeholder-blue-300 font-sans font-medium"
               />
               <div className="flex items-center gap-2 pr-3">
                 <button
                   type="submit"
                   disabled={isSearching || !query.trim()}
-                  className="p-3 bg-sky-500 text-white rounded-xl hover:bg-sky-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-sky-200"
+                  className="p-3 bg-sky-500 text-white rounded-xl hover:bg-sky-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-brand-blue/20"
                 >
                   {isSearching ? (
                     <motion.div
@@ -613,7 +627,7 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 className="absolute -bottom-6 left-0 right-0 flex justify-center"
               >
-                <span className="text-[10px] text-blue-600 font-medium flex items-center gap-1">
+                <span className="text-[10px] text-brand-cyan font-medium flex items-center gap-1">
                   <Sparkles size={10} className="animate-pulse" />
                   AI is generating a knowledge summary...
                 </span>
@@ -627,16 +641,16 @@ export default function App() {
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 5 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white/40 backdrop-blur-xl rounded-xl border border-white/50 overflow-hidden z-[60] shadow-2xl"
+                  className="absolute top-full left-0 right-0 mt-2 bg-[#011e38]/50 backdrop-blur-3xl backdrop-blur-xl rounded-xl border border-brand-cyan/20 overflow-hidden z-[60] shadow-2xl"
                 >
-                  <div className="p-4 border-b border-white/50 flex justify-between items-center bg-transparent/50">
-                    <span className="text-xs font-medium text-blue-600 flex items-center gap-2">
+                  <div className="p-4 border-b border-brand-cyan/20 flex justify-between items-center bg-transparent/50">
+                    <span className="text-xs font-medium text-brand-cyan flex items-center gap-2">
                       <Clock size={14} /> Recent Searches
                     </span>
                     <button
                       type="button"
                       onClick={clearHistory}
-                      className="text-xs text-blue-600 hover:text-blue-950 transition-colors"
+                      className="text-xs text-brand-cyan hover:text-white transition-colors"
                     >
                       Clear All
                     </button>
@@ -650,10 +664,10 @@ export default function App() {
                           setQuery(item.query);
                           handleSearch(undefined, item.query);
                         }}
-                        className="w-full px-5 py-3 text-left hover:bg-white/30 flex items-center justify-between group transition-colors"
+                        className="w-full px-5 py-3 text-left hover:bg-[#011e38]/50 backdrop-blur-3xl flex items-center justify-between group transition-colors"
                       >
-                        <span className="text-blue-800 group-hover:text-blue-950 transition-colors">{item.query}</span>
-                        <ChevronRight size={16} className="text-blue-500 group-hover:text-blue-950 transition-colors" />
+                        <span className="text-brand-light/90 group-hover:text-white transition-colors">{item.query}</span>
+                        <ChevronRight size={16} className="text-brand-cyan group-hover:text-white transition-colors" />
                       </button>
                     ))}
                   </div>
@@ -673,9 +687,9 @@ export default function App() {
         <div className="w-full mt-16">
           {isSearching && (
             <div className="space-y-6 w-full max-w-2xl mx-auto">
-              <div className="h-3 bg-white/30 rounded-full w-full animate-pulse"></div>
-              <div className="h-3 bg-white/30 rounded-full w-5/6 animate-pulse"></div>
-              <div className="h-3 bg-white/30 rounded-full w-4/6 animate-pulse"></div>
+              <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded-full w-full animate-pulse"></div>
+              <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded-full w-5/6 animate-pulse"></div>
+              <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded-full w-4/6 animate-pulse"></div>
             </div>
           )}
 
@@ -689,22 +703,22 @@ export default function App() {
           <div className="flex flex-col lg:flex-row gap-8 items-start w-full">
           {/* Mobile Knowledge Panel (Top) */}
           {(knowledgePanel || isGeneratingKg) && (
-            <div className="block lg:hidden w-full mb-10 p-4 bg-white/30 rounded-3xl border border-white/40 shadow-2xl">
+            <div className="block lg:hidden w-full mb-10 p-4 bg-[#011e38]/50 backdrop-blur-3xl rounded-3xl border border-brand-cyan/20 shadow-2xl">
               <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-2">
-                  <Sparkles size={14} className="text-blue-600" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">AI Knowledge Summary</span>
+                  <Sparkles size={14} className="text-brand-cyan" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-brand-cyan">AI Knowledge Summary</span>
                 </div>
               </div>
               {isGeneratingKg ? (
-                  <div className="w-full bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 animate-pulse">
-                    <div className="h-48 bg-white/30 rounded-xl mb-4"></div>
-                    <div className="h-6 bg-white/30 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-white/30 rounded w-1/2 mb-4"></div>
+                  <div className="w-full bg-[#011e38]/50 backdrop-blur-3xl backdrop-blur-xl border border-brand-cyan/20 rounded-2xl p-6 animate-pulse">
+                    <div className="h-48 bg-[#011e38]/50 backdrop-blur-3xl rounded-xl mb-4"></div>
+                    <div className="h-6 bg-[#011e38]/50 backdrop-blur-3xl rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-[#011e38]/50 backdrop-blur-3xl rounded w-1/2 mb-4"></div>
                     <div className="space-y-2">
-                      <div className="h-3 bg-white/30 rounded w-full"></div>
-                      <div className="h-3 bg-white/30 rounded w-full"></div>
-                      <div className="h-3 bg-white/30 rounded w-2/3"></div>
+                      <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded w-full"></div>
+                      <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded w-full"></div>
+                      <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded w-2/3"></div>
                     </div>
                   </div>
                 ) : (
@@ -724,24 +738,24 @@ export default function App() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="vercel-card p-6 md:p-10 rounded-3xl w-full border-t-4 border-t-sky-400"
+                  className="vercel-card p-6 md:p-10 rounded-3xl w-full border-t-4 border-t-brand-blue"
                 >
                   <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2 text-blue-950">
-                      <Sparkles size={18} className="text-blue-600" />
+                    <div className="flex items-center gap-2 text-white">
+                      <Sparkles size={18} className="text-brand-cyan" />
                       <span className="text-sm font-medium">{isReading ? 'AI is reading the page...' : 'AI Reader Mode'}</span>
                     </div>
                     {!isReading && (
-                      <button onClick={() => setAnswer(null)} className="text-blue-600 hover:text-blue-950 transition-colors">
+                      <button onClick={() => setAnswer(null)} className="text-brand-cyan hover:text-white transition-colors">
                         <X size={18} />
                       </button>
                     )}
                   </div>
                   {isReading ? (
                     <div className="space-y-4">
-                      <div className="h-3 bg-white/30 rounded-full w-full animate-pulse"></div>
-                      <div className="h-3 bg-white/30 rounded-full w-5/6 animate-pulse"></div>
-                      <div className="h-3 bg-white/30 rounded-full w-4/6 animate-pulse"></div>
+                      <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded-full w-full animate-pulse"></div>
+                      <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded-full w-5/6 animate-pulse"></div>
+                      <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded-full w-4/6 animate-pulse"></div>
                     </div>
                   ) : (
                     <div className="markdown-body text-base">
@@ -753,7 +767,7 @@ export default function App() {
 
               {images.length > 0 && (
                 <div className="w-full">
-                  <div className="flex items-center gap-2 text-blue-600 mb-4 px-1">
+                  <div className="flex items-center gap-2 text-brand-cyan mb-4 px-1">
                     <Sparkles size={16} className="text-yellow-500" />
                     <span className="text-sm font-medium">Images</span>
                   </div>
@@ -767,7 +781,7 @@ export default function App() {
                         className="group cursor-pointer"
                         onClick={() => window.open(img.link, '_blank')}
                       >
-                        <div className="aspect-square rounded-2xl overflow-hidden bg-white/40 border border-white/60 mb-2 shadow-sm group-hover:shadow-lg group-hover:shadow-sky-100/50 transition-all">
+                        <div className="aspect-square rounded-2xl overflow-hidden bg-[#011e38]/50 backdrop-blur-3xl border border-brand-cyan/20 mb-2 shadow-sm group-hover:shadow-lg group-hover:shadow-brand-blue/20 transition-all">
                           <img 
                             src={img.imageUrl} 
                             alt={img.title} 
@@ -775,7 +789,7 @@ export default function App() {
                             referrerPolicy="no-referrer"
                           />
                         </div>
-                        <p className="text-[10px] text-blue-700 line-clamp-1 px-1">{img.title}</p>
+                        <p className="text-[10px] text-brand-light/70 line-clamp-1 px-1">{img.title}</p>
                       </motion.div>
                     ))}
                   </div>
@@ -784,7 +798,7 @@ export default function App() {
 
               {results.length > 0 && (
                 <div className="w-full">
-                  <div className="flex items-center gap-2 text-blue-600 mb-4 px-1">
+                  <div className="flex items-center gap-2 text-brand-cyan mb-4 px-1">
                     <Globe size={16} />
                     <span className="text-sm font-medium">Web Sources</span>
                   </div>
@@ -800,7 +814,7 @@ export default function App() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.05 }}
-                          className="group block w-full text-left p-6 bg-white/50 backdrop-blur-xl border border-white/70 rounded-3xl hover:bg-white/70 hover:shadow-2xl hover:shadow-sky-200/50 hover:-translate-y-2 transition-all border-b-4 border-b-transparent hover:border-b-sky-400 shadow-md shadow-blue-100/20"
+                          className="group block w-full text-left p-6 bg-[#011e38]/50 backdrop-blur-3xl backdrop-blur-xl border border-brand-cyan/20 rounded-3xl hover:bg-[#011e38]/50 backdrop-blur-3xl hover:shadow-2xl hover:shadow-brand-blue/20 hover:-translate-y-2 transition-all border-b-4 border-b-transparent hover:border-b-brand-blue shadow-md shadow-black/30"
                         >
                           <div className="flex gap-4">
                             <div className="flex-1 flex flex-col gap-2">
@@ -809,12 +823,12 @@ export default function App() {
                                   <img 
                                     src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`} 
                                     alt="favicon" 
-                                    className="w-4 h-4 object-contain rounded-full bg-white/40"
+                                    className="w-4 h-4 object-contain rounded-full bg-[#011e38]/50 backdrop-blur-3xl"
                                     onError={(e) => {
                                       (e.target as HTMLImageElement).style.display = 'none';
                                     }}
                                   />
-                                  <span className="text-xs font-medium text-blue-700">
+                                  <span className="text-xs font-medium text-brand-light/70">
                                     {domain}
                                   </span>
                                 </div>
@@ -824,27 +838,27 @@ export default function App() {
                                       e.stopPropagation();
                                       handleReadWithAI(result.uri);
                                     }}
-                                    className="p-1.5 bg-white/30 rounded-full text-blue-600 hover:text-blue-600 hover:bg-white/40 transition-all"
+                                    className="p-1.5 bg-[#011e38]/50 backdrop-blur-3xl rounded-full text-brand-cyan hover:text-brand-cyan hover:bg-[#011e38]/50 backdrop-blur-3xl transition-all"
                                     title="AI Summary"
                                   >
                                     <Sparkles size={14} />
                                   </button>
-                                  <div className="p-1.5 bg-white/30 rounded-full text-blue-600 group-hover:text-blue-950 transition-all">
+                                  <div className="p-1.5 bg-[#011e38]/50 backdrop-blur-3xl rounded-full text-brand-cyan group-hover:text-white transition-all">
                                     <ExternalLink size={14} />
                                   </div>
                                 </div>
                               </div>
-              <h3 className="text-xl font-bold text-blue-950 group-hover:text-sky-700 transition-colors tracking-tight">
+              <h3 className="text-xl font-bold text-white group-hover:text-brand-cyan transition-colors tracking-tight">
                 {result.title}
               </h3>
                               {result.snippet && (
-                                <p className="text-sm text-blue-800 line-clamp-2 leading-relaxed">
+                                <p className="text-sm text-brand-light/90 line-clamp-2 leading-relaxed">
                                   {result.snippet}
                                 </p>
                               )}
                             </div>
                             {result.imageUrl && (
-                                <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 border border-white/60 shadow-inner bg-white/20">
+                                <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 border border-brand-cyan/20 shadow-inner bg-[#011e38]/50 backdrop-blur-3xl">
                                   <img 
                                     src={result.imageUrl} 
                                     alt="thumbnail" 
@@ -866,14 +880,14 @@ export default function App() {
             {(knowledgePanel || isGeneratingKg) && (
               <div className="hidden lg:block w-[350px] flex-shrink-0 sticky top-24">
                 {isGeneratingKg ? (
-                  <div className="w-full bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 animate-pulse">
-                    <div className="h-48 bg-white/30 rounded-xl mb-4"></div>
-                    <div className="h-6 bg-white/30 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-white/30 rounded w-1/2 mb-4"></div>
+                  <div className="w-full bg-[#011e38]/50 backdrop-blur-3xl backdrop-blur-xl border border-brand-cyan/20 rounded-2xl p-6 animate-pulse">
+                    <div className="h-48 bg-[#011e38]/50 backdrop-blur-3xl rounded-xl mb-4"></div>
+                    <div className="h-6 bg-[#011e38]/50 backdrop-blur-3xl rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-[#011e38]/50 backdrop-blur-3xl rounded w-1/2 mb-4"></div>
                     <div className="space-y-2">
-                      <div className="h-3 bg-white/30 rounded w-full"></div>
-                      <div className="h-3 bg-white/30 rounded w-full"></div>
-                      <div className="h-3 bg-white/30 rounded w-2/3"></div>
+                      <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded w-full"></div>
+                      <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded w-full"></div>
+                      <div className="h-3 bg-[#011e38]/50 backdrop-blur-3xl rounded w-2/3"></div>
                     </div>
                   </div>
                 ) : (
@@ -906,19 +920,19 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative bg-white/60 backdrop-blur-2xl border border-white/80 p-10 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] w-full max-w-md flex flex-col items-center text-center overflow-hidden border-b-[6px] border-b-sky-400"
+              className="relative bg-[#011e38]/50 backdrop-blur-3xl backdrop-blur-2xl border border-brand-cyan/20 p-10 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] w-full max-w-md flex flex-col items-center text-center overflow-hidden border-b-[6px] border-b-brand-blue"
             >
                 <button
                   onClick={() => setShowLoginModal(false)}
-                  className="absolute top-4 right-4 text-blue-700 hover:text-sky-600 transition-colors p-1"
+                  className="absolute top-4 right-4 text-brand-light/70 hover:text-brand-blue transition-colors p-1"
                 >
                   <X size={24} />
                 </button>
-                <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-sky-600 font-bold text-3xl mb-6 shadow-lg shadow-sky-100 ring-2 ring-sky-50">
+                <div className="w-14 h-14 rounded-2xl bg-brand-blue flex items-center justify-center text-brand-blue font-bold text-3xl mb-6 shadow-lg shadow-brand-blue/20 ring-2 ring-sky-50">
                   S
                 </div>
-                <h2 className="text-3xl font-sans font-black text-blue-950 mb-3 tracking-tighter">Skybound Welcome</h2>
-                <p className="text-blue-700/80 font-medium text-sm mb-10 px-4">Begin your journey across the infinite sky of information. Your preferences will sync across all horizons.</p>
+                <h2 className="text-3xl font-sans font-black text-white mb-3 tracking-tighter">Skybound Welcome</h2>
+                <p className="text-brand-light/70 font-medium text-sm mb-10 px-4">Begin your journey across the infinite sky of information. Your preferences will sync across all horizons.</p>
               
               <div className="w-full">
                 <LoginWithSanscounts onLoginSuccess={(userData) => {
