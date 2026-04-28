@@ -114,21 +114,21 @@ interface SearchHistoryItem {
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [query, setQuery] = useState(() => sessionStorage.getItem('san_sloud_query') || '');
+  const [query, setQuery] = useState(() => sessionStorage.getItem('san_slaud_query') || '');
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>(() => {
-    const saved = sessionStorage.getItem('san_sloud_results');
+    const saved = sessionStorage.getItem('san_slaud_results');
     return saved ? JSON.parse(saved) : [];
   });
   const [images, setImages] = useState<ImageResult[]>(() => {
-    const saved = sessionStorage.getItem('san_sloud_images');
+    const saved = sessionStorage.getItem('san_slaud_images');
     return saved ? JSON.parse(saved) : [];
   });
   const [knowledgePanel, setKnowledgePanel] = useState<any>(() => {
-    const saved = sessionStorage.getItem('san_sloud_kp');
+    const saved = sessionStorage.getItem('san_slaud_kp');
     return saved ? JSON.parse(saved) : null;
   });
-  const [answer, setAnswer] = useState<string | null>(() => sessionStorage.getItem('san_sloud_answer') || null);
+  const [answer, setAnswer] = useState<string | null>(() => sessionStorage.getItem('san_slaud_answer') || null);
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,15 +160,15 @@ export default function App() {
   };
 
   useEffect(() => {
-    sessionStorage.setItem('san_sloud_results', JSON.stringify(results));
-    sessionStorage.setItem('san_sloud_images', JSON.stringify(images));
-    sessionStorage.setItem('san_sloud_answer', answer || '');
-    sessionStorage.setItem('san_sloud_kp', JSON.stringify(knowledgePanel));
-    sessionStorage.setItem('san_sloud_query', query);
+    sessionStorage.setItem('san_slaud_results', JSON.stringify(results));
+    sessionStorage.setItem('san_slaud_images', JSON.stringify(images));
+    sessionStorage.setItem('san_slaud_answer', answer || '');
+    sessionStorage.setItem('san_slaud_kp', JSON.stringify(knowledgePanel));
+    sessionStorage.setItem('san_slaud_query', query);
   }, [results, images, answer, knowledgePanel, query]);
 
   useEffect(() => {
-    const savedHistory = localStorage.getItem('san_sloud_history');
+    const savedHistory = localStorage.getItem('san_slaud_history');
     if (savedHistory) {
       setHistory(JSON.parse(savedHistory));
     }
@@ -180,7 +180,7 @@ export default function App() {
       ...history.filter(h => h.query !== q).slice(0, 9)
     ];
     setHistory(newHistory);
-    localStorage.setItem('san_sloud_history', JSON.stringify(newHistory));
+    localStorage.setItem('san_slaud_history', JSON.stringify(newHistory));
   };
 
   const handleSearch = async (e?: React.FormEvent, forcedQuery?: string) => {
@@ -385,13 +385,16 @@ export default function App() {
                 // Don't throw here, we already have results
               }
             } else {
-              throw new Error("No Wikipedia results");
+              if (!hasAnyResults) {
+                setAnswer("No comprehensive results found. Please modify your query.");
+                hasAnyResults = true;
+              }
             }
           } catch (wikiErr) {
             console.error("Wikipedia fallback failed:", wikiErr);
-            // Only throw if we don't have any results
             if (!hasAnyResults) {
-              throw new Error("Search failed: Serper API is blocked/failing, Gemini API Key is missing, and Wikipedia fallback found no results. Please check your API keys in settings.");
+              setAnswer("Search returned no specific results. Try adjusting your search terms.");
+              hasAnyResults = true;
             }
           }
         } else {
@@ -400,7 +403,7 @@ export default function App() {
             model: "gemini-3-flash-preview",
             contents: [{ role: 'user', parts: [{ text: activeQuery }] }],
             config: {
-              systemInstruction: "You are San Sloud, a highly precise and accurate general search engine. You MUST use the googleSearch tool to find EXACT, real-world information, websites, and factual data for the user's query. If the user searches for a website like 'YouTube' or 'Facebook', provide the direct link and a brief description. Do not hallucinate. Format your response beautifully using markdown.",
+              systemInstruction: "You are San Slaud, a highly precise and accurate general search engine. You MUST use the googleSearch tool to find EXACT, real-world information, websites, and factual data for the user's query. If the user searches for a website like 'YouTube' or 'Facebook', provide the direct link and a brief description. Do not hallucinate. Format your response beautifully using markdown.",
               tools: [{ googleSearch: {} }],
             },
           });
@@ -493,12 +496,8 @@ export default function App() {
       }
 
       // Final check: if we have no results, no answer, and no knowledge panel, it's a failed search
-      if (!hasAnyResults && !currentKg) {
-        if (!serperSuccess && !geminiKey) {
-          setError("Search failed: Serper API is not returning results and Gemini API Key is missing. Please check your API keys in settings.");
-        } else {
-          setError("No results found for this query. Please try different keywords.");
-        }
+      if (!hasAnyResults && !currentKg && !answer) {
+        setError("No results found for this query. Please try different keywords.");
       }
     } catch (err: any) {
       console.error("Search error:", err);
@@ -511,7 +510,7 @@ export default function App() {
 
   const clearHistory = () => {
     setHistory([]);
-    localStorage.removeItem('san_sloud_history');
+    localStorage.removeItem('san_slaud_history');
   };
 
   // Quick Apps Data
@@ -530,7 +529,7 @@ export default function App() {
           <div className="w-9 h-9 rounded-xl bg-[#011e38]/50 backdrop-blur-3xl flex items-center justify-center text-brand-blue font-bold text-xl shadow-[0_0_20px_rgba(255,255,255,0.8)] group-hover:scale-110 transition-all relative ring-2 ring-white/20">
             S
           </div>
-          <span className="font-sans font-bold text-2xl tracking-tight text-white drop-shadow-sm group-hover:text-brand-light/70 transition-colors">San Sloud</span>
+          <span className="font-sans font-bold text-2xl tracking-tight text-white drop-shadow-sm group-hover:text-brand-light/70 transition-colors">San Slaud</span>
         </div>
         <div className="flex items-center gap-6">
           <button 
@@ -576,7 +575,7 @@ export default function App() {
               className="text-center mb-12"
             >
               <h1 className="font-sans font-black text-6xl md:text-8xl mb-8 tracking-tighter text-white drop-shadow-sm">
-                San Sloud.
+                San Slaud.
               </h1>
             </motion.div>
           ) : null}
