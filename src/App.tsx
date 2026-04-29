@@ -344,98 +344,99 @@ export default function App() {
       }
 
       if (!serperSuccess) {
-        if (!geminiKey) {
-          // Fallback to Wikipedia API if both Serper and Gemini fail
-          try {
-            const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(activeQuery)}&utf8=&format=json&origin=*`);
-            const wikiData = await wikiRes.json();
-            if (wikiData.query && wikiData.query.search && wikiData.query.search.length > 0) {
-              const wikiResults = wikiData.query.search
-                .filter((item: any) => !isGamblingSite(item.title) && !isGamblingSite(item.snippet))
-                .map((item: any) => ({
-                  title: item.title,
-                  uri: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
-                  snippet: item.snippet.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML tags
-                }));
-              setResults(wikiResults);
-              hasAnyResults = true;
-              
-              // Also try to get a summary for the first result
-              try {
-                const firstTitle = wikiData.query.search[0].title;
-                const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(firstTitle)}`);
-                if (summaryRes.ok) {
-                  const summaryData = await summaryRes.json();
-                  if (summaryData.extract) {
-                    setAnswer(summaryData.extract);
-                    if (summaryData.thumbnail) {
-                      setKnowledgePanel({
-                        title: summaryData.title,
-                        type: summaryData.description || "Wikipedia Article",
-                        description: summaryData.extract,
-                        imageUrl: summaryData.thumbnail.source,
-                        attributes: {},
-                        isAiGenerated: false
-                      });
-                    }
+        let fallbackResults: any[] = [];
+        // ALWAYS Fetch Wikipedia for some good primary links
+        try {
+          const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(activeQuery)}&utf8=&format=json&origin=*`);
+          const wikiData = await wikiRes.json();
+          if (wikiData.query && wikiData.query.search && wikiData.query.search.length > 0) {
+            fallbackResults = wikiData.query.search
+              .filter((item: any) => !isGamblingSite(item.title) && !isGamblingSite(item.snippet))
+              .map((item: any) => ({
+                title: item.title,
+                uri: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
+                snippet: item.snippet.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML tags
+              }));
+            setResults(fallbackResults);
+            hasAnyResults = true;
+            
+            // Also try to get a summary for the first result
+            try {
+              const firstTitle = wikiData.query.search[0].title;
+              const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(firstTitle)}`);
+              if (summaryRes.ok) {
+                const summaryData = await summaryRes.json();
+                if (summaryData.extract) {
+                  setAnswer(summaryData.extract);
+                  if (summaryData.thumbnail) {
+                    setKnowledgePanel({
+                      title: summaryData.title,
+                      type: summaryData.description || "Wikipedia Article",
+                      description: summaryData.extract,
+                      imageUrl: summaryData.thumbnail.source,
+                      attributes: {},
+                      isAiGenerated: false
+                    });
                   }
                 }
-              } catch (summaryErr) {
-                console.error("Wikipedia summary fetch failed:", summaryErr);
-                // Don't throw here, we already have results
               }
-            } else {
-              if (!hasAnyResults) {
-                setAnswer("No comprehensive results found. Please modify your query.");
-                hasAnyResults = true;
-              }
-            }
-          } catch (wikiErr) {
-            console.error("Wikipedia fallback failed:", wikiErr);
-            if (!hasAnyResults) {
-              setAnswer("Search returned no specific results. Try adjusting your search terms.");
-              hasAnyResults = true;
+            } catch (summaryErr) {
+              console.error("Wikipedia summary fetch failed:", summaryErr);
             }
           }
-        } else {
-          // Fallback to Gemini with Streaming for faster perceived performance
-          const responseStream = await ai.models.generateContentStream({
-            model: "gemini-3-flash-preview",
-            contents: [{ role: 'user', parts: [{ text: activeQuery }] }],
-            config: {
-              systemInstruction: "You are San Slaud, a highly precise and accurate general search engine. You MUST use the googleSearch tool to find EXACT, real-world information, websites, and factual data for the user's query. If the user searches for a website like 'YouTube' or 'Facebook', provide the direct link and a brief description. Do not hallucinate. Format your response beautifully using markdown.",
-              tools: [{ googleSearch: {} }],
-            },
-          });
+        } catch (wikiErr) {
+          console.error("Wikipedia fallback failed:", wikiErr);
+        }
 
-          let fullText = '';
-          let foundResults = false;
-          
-          for await (const chunk of responseStream) {
-            if (chunk.text) {
-              fullText += chunk.text;
-              setAnswer(fullText);
-              hasAnyResults = true;
-            }
+        // Now Try Gemini Stream if API key exists
+        if (geminiKey) {
+          try {
+            // Fallback to Gemini with Streaming for faster perceived performance
+            const responseStream = await ai.models.generateContentStream({
+              model: "gemini-2.5-flash",
+              contents: [{ role: 'user', parts: [{ text: activeQuery }] }],
+              config: {
+                systemInstruction: "You are San Slaud, a highly precise and accurate general search engine. You MUST use the googleSearch tool to find EXACT, real-world information, websites, and factual data for the user's query. If the user searches for a website like 'YouTube' or 'Facebook', provide the direct link and a brief description. Do not hallucinate. Format your response beautifully using markdown.",
+                tools: [{ googleSearch: {} }],
+              },
+            });
+
+            let fullText = '';
+            let foundResults = false;
             
-            if (!foundResults) {
-              const chunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
-              if (chunks) {
-                const extractedResults = chunks
-                  .filter((c: any) => c.web && !isGamblingSite(c.web.title) && !isGamblingSite(c.web.uri))
-                  .map((c: any) => ({
-                    title: c.web?.title || 'Untitled',
-                    uri: c.web?.uri || '',
-                  }));
-                if (extractedResults.length > 0) {
-                  setResults(extractedResults);
-                  foundResults = true;
-                  hasAnyResults = true;
+            for await (const chunk of responseStream) {
+              if (chunk.text) {
+                fullText += chunk.text;
+                // If we get an answer stream, prefer that over wikipedia's summary
+                setAnswer(fullText);
+                hasAnyResults = true;
+              }
+              
+              if (!foundResults && fallbackResults.length === 0) {
+                const chunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
+                if (chunks) {
+                  const extractedResults = chunks
+                    .filter((c: any) => c.web && !isGamblingSite(c.web.title) && !isGamblingSite(c.web.uri))
+                    .map((c: any) => ({
+                      title: c.web?.title || 'Untitled',
+                      uri: c.web?.uri || '',
+                    }));
+                  if (extractedResults.length > 0) {
+                    setResults(extractedResults);
+                    foundResults = true;
+                    hasAnyResults = true;
+                  }
                 }
               }
             }
+          } catch (gemErr) {
+            console.error("Gemini stream fallback failed:", gemErr);
           }
-          if (!fullText) setAnswer("No direct answer found.");
+        }
+        
+        if (!hasAnyResults) {
+          setAnswer("No comprehensive results found. Please modify your query.");
+          hasAnyResults = true;
         }
       }
 
@@ -443,7 +444,7 @@ export default function App() {
       if (!currentKg) {
         try {
           const aiPanelResponse = await ai.models.generateContent({
-            model: "gemini-3-flash-preview",
+            model: "gemini-2.5-flash",
             contents: [{ role: 'user', parts: [{ text: `Create a structured knowledge panel for the query: "${activeQuery}". 
             Provide a comprehensive, factual, and professional summary of this topic.
             Return a JSON object with exactly these fields:
