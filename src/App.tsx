@@ -9,6 +9,7 @@ import { Search, Globe, Clock, ArrowRight, Sparkles, X, Menu, ExternalLink, Chev
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 import { LoginWithSanscounts } from './components/LoginWithSanscounts';
+import { Browser } from '@capacitor/browser';
 
 // Search result interfaces
 interface SearchResult {
@@ -194,7 +195,7 @@ export default function App() {
       if (!/^https?:\/\//i.test(finalUrl)) {
         finalUrl = 'https://' + finalUrl;
       }
-      window.open(finalUrl, '_blank');
+      Browser.open({ url: finalUrl });
       setQuery(finalUrl);
       setShowHistory(false);
       return;
@@ -345,53 +346,11 @@ export default function App() {
 
       if (!serperSuccess) {
         let fallbackResults: any[] = [];
-        // ALWAYS Fetch Wikipedia for some good primary links
-        try {
-          const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(activeQuery)}&utf8=&format=json&origin=*`);
-          const wikiData = await wikiRes.json();
-          if (wikiData.query && wikiData.query.search && wikiData.query.search.length > 0) {
-            fallbackResults = wikiData.query.search
-              .filter((item: any) => !isGamblingSite(item.title) && !isGamblingSite(item.snippet))
-              .map((item: any) => ({
-                title: item.title,
-                uri: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
-                snippet: item.snippet.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML tags
-              }));
-            setResults(fallbackResults);
-            hasAnyResults = true;
-            
-            // Also try to get a summary for the first result
-            try {
-              const firstTitle = wikiData.query.search[0].title;
-              const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(firstTitle)}`);
-              if (summaryRes.ok) {
-                const summaryData = await summaryRes.json();
-                if (summaryData.extract) {
-                  setAnswer(summaryData.extract);
-                  if (summaryData.thumbnail) {
-                    setKnowledgePanel({
-                      title: summaryData.title,
-                      type: summaryData.description || "Wikipedia Article",
-                      description: summaryData.extract,
-                      imageUrl: summaryData.thumbnail.source,
-                      attributes: {},
-                      isAiGenerated: false
-                    });
-                  }
-                }
-              }
-            } catch (summaryErr) {
-              console.error("Wikipedia summary fetch failed:", summaryErr);
-            }
-          }
-        } catch (wikiErr) {
-          console.error("Wikipedia fallback failed:", wikiErr);
-        }
+        let foundResults = false;
 
-        // Now Try Gemini Stream if API key exists
+        // Try Gemini Stream first if API key exists
         if (geminiKey) {
           try {
-            // Fallback to Gemini with Streaming for faster perceived performance
             const responseStream = await ai.models.generateContentStream({
               model: "gemini-2.5-flash",
               contents: [{ role: 'user', parts: [{ text: activeQuery }] }],
@@ -402,12 +361,10 @@ export default function App() {
             });
 
             let fullText = '';
-            let foundResults = false;
             
             for await (const chunk of responseStream) {
               if (chunk.text) {
                 fullText += chunk.text;
-                // If we get an answer stream, prefer that over wikipedia's summary
                 setAnswer(fullText);
                 hasAnyResults = true;
               }
@@ -434,6 +391,66 @@ export default function App() {
           }
         }
         
+        // If Gemini didn't find specific links or no Gemini key, THEN fallback to Internal Search Proxy (DuckDuckGo)
+        if (!foundResults) {
+          try {
+            const proxyRes = await fetch(`/api/search?q=${encodeURIComponent(activeQuery)}`);
+            const proxyData = await proxyRes.json();
+            
+            if (proxyData.results && proxyData.results.length > 0) {
+              fallbackResults = proxyData.results.map((item: any) => ({
+                title: item.title,
+                uri: item.url,
+                snippet: item.snippet,
+              }));
+              setResults(fallbackResults);
+              hasAnyResults = true;
+            } else {
+               // Absolute fallback to wikipedia if duckduckgo proxy fails
+               const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(activeQuery)}&utf8=&format=json&origin=*`);
+               const wikiData = await wikiRes.json();
+               if (wikiData.query && wikiData.query.search && wikiData.query.search.length > 0) {
+                 fallbackResults = wikiData.query.search.map((item: any) => ({
+                   title: item.title,
+                   uri: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
+                   snippet: item.snippet.replace(/<\/?[^>]+(>|$)/g, ""), 
+                 }));
+                 setResults(fallbackResults);
+                 hasAnyResults = true;
+               }
+            }
+            
+            // Only fetch Wikipedia summary if we don't have an answer from Gemini
+            if (!answer && fallbackResults.length > 0) {
+              try {
+                // Determine title from first result or active query
+                const firstTitle = fallbackResults[0].title.split('-')[0].trim();
+                const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(firstTitle)}`);
+                if (summaryRes.ok) {
+                  const summaryData = await summaryRes.json();
+                  if (summaryData.extract) {
+                    setAnswer(summaryData.extract);
+                    if (summaryData.thumbnail) {
+                      setKnowledgePanel({
+                        title: summaryData.title,
+                        type: summaryData.description || "Wikipedia Article",
+                        description: summaryData.extract,
+                        imageUrl: summaryData.thumbnail.source,
+                        attributes: {},
+                        isAiGenerated: false
+                      });
+                    }
+                  }
+                }
+              } catch (summaryErr) {
+                console.error("Wikipedia summary fetch failed:", summaryErr);
+              }
+            }
+          } catch (proxyErr) {
+            console.error("Proxy fallback failed:", proxyErr);
+          }
+        }
+
         if (!hasAnyResults) {
           setAnswer("No comprehensive results found. Please modify your query.");
           hasAnyResults = true;
@@ -756,7 +773,24 @@ export default function App() {
                     </div>
                   ) : (
                     <div className="markdown-body text-base">
-                      <Markdown>{answer}</Markdown>
+                      <Markdown
+                        components={{
+                          a: ({ node, ...props }) => {
+                            return (
+                              <a 
+                                {...props} 
+                                onClick={(e) => { 
+                                  e.preventDefault(); 
+                                  const url = props.href || '';
+                                  // Capacitor open instead of Iframe if they prefer Capacitor
+                                  if (url) Browser.open({ url });
+                                }} 
+                                className="text-brand-cyan hover:underline break-all"
+                              />
+                            );
+                          }
+                        }}
+                      >{answer}</Markdown>
                     </div>
                   )}
                 </motion.div>
@@ -776,7 +810,7 @@ export default function App() {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: idx * 0.02 }}
                         className="group cursor-pointer"
-                        onClick={() => window.open(img.link, '_blank')}
+                        onClick={() => Browser.open({ url: img.link })}
                       >
                         <div className="aspect-square rounded-2xl overflow-hidden bg-[#011e38]/50 backdrop-blur-3xl border border-brand-cyan/20 mb-2 shadow-sm group-hover:shadow-lg group-hover:shadow-brand-blue/20 transition-all">
                           <img 
@@ -806,7 +840,7 @@ export default function App() {
                         <motion.button
                           key={idx}
                           onClick={() => {
-                            window.open(result.uri, '_blank');
+                            Browser.open({ url: result.uri });
                           }}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
