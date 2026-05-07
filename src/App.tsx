@@ -515,7 +515,7 @@ export default function App() {
 
       // Final check: if we have no results, no answer, and no knowledge panel, it's a failed search
       if (!hasAnyResults && !currentKg && !answer) {
-        setError("No results found for this query. Please try different keywords.");
+        setError("দুঃখিত, এই অনুসন্ধানের জন্য কোনো ফলাফল পাওয়া যায়নি। অনুগ্রহ করে অন্য কোনো কিউওয়ার্ড দিয়ে চেষ্টা করুন বা আপনার ইন্টারনেট কানেকশন চেক করুন।");
       }
     } catch (err: any) {
       console.error("Search error:", err);

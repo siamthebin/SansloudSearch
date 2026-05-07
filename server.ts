@@ -25,21 +25,27 @@ async function startServer() {
       
       const html = await htmlRes.text();
       
-      // More robust regex parsing for duckduckgo html results
+      // More robust parsing for duckduckgo html results
       const results: any[] = [];
-      const resultBlocks = html.split('<div class="result');
       
-      for (let i = 1; i < resultBlocks.length; i++) {
-        const block = resultBlocks[i];
+      // Use a more inclusive regex that finds the result container
+      const resultRegex = /<div class="[^"]*result[^"]*"[^>]*>(.*?)<\/div>\s*<\/div>\s*<\/div>/gs;
+      const titleRegex = /<a class="result__a" [^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/s;
+      const snippetRegex = /<a class="result__snippet" [^>]*>(.*?)<\/a>/s;
+      
+      let match;
+      while ((match = resultRegex.exec(html)) !== null) {
         if (results.length >= 10) break;
+        const block = match[1];
         
-        const urlMatch = block.match(/href="([^"]+)"/);
-        const titleMatch = block.match(/<a class="result__a"[^>]*>(.*?)<\/a>/s);
-        const snippetMatch = block.match(/<a class="result__snippet"[^>]*>(.*?)<\/a>/s);
+        const titleMatch = block.match(titleRegex);
+        if (!titleMatch) continue;
         
-        let url = urlMatch ? urlMatch[1] : null;
-        let title = titleMatch ? titleMatch[1].replace(/<\/?[^>]+(>|$)/g, "").trim() : null;
-        let snippet = snippetMatch ? snippetMatch[1].replace(/<\/?[^>]+(>|$)/g, "").trim() : null;
+        let url = titleMatch[1];
+        let title = titleMatch[2].replace(/<\/?[^>]+(>|$)/g, "").trim();
+        
+        const snippetMatch = block.match(snippetRegex);
+        let snippet = snippetMatch ? snippetMatch[1].replace(/<\/?[^>]+(>|$)/g, "").trim() : "";
 
         if (url && url.startsWith('//duckduckgo.com/l/?uddg=')) {
           try {
@@ -49,11 +55,25 @@ async function startServer() {
         }
         
         if (url && !url.includes('duckduckgo.com') && title) {
-          results.push({ url, title, snippet: snippet || "" });
+          results.push({ url, title, snippet });
+        }
+      }
+
+      // If regex failing, try a backup simple paragraph extraction
+      if (results.length === 0) {
+        const simpleRegex = /<a class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g;
+        let sMatch;
+        while ((sMatch = simpleRegex.exec(html)) !== null) {
+          if (results.length >= 10) break;
+          results.push({
+            url: sMatch[1].startsWith('//') ? 'https:' + sMatch[1] : sMatch[1],
+            title: sMatch[2].replace(/<\/?[^>]+(>|$)/g, "").trim(),
+            snippet: ""
+          });
         }
       }
       
-      console.log(`Search proxy for "${query}" returned ${results.length} results`);
+      console.log(`Search proxy for "${query}" returned ${results.length} results. HTML length: ${html.length}`);
       res.json({ results });
     } catch (e: any) {
       console.error('Search proxy error:', e);
