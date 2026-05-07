@@ -352,7 +352,7 @@ export default function App() {
         if (geminiKey) {
           try {
             const responseStream = await ai.models.generateContentStream({
-              model: "gemini-2.5-flash",
+              model: "gemini-3-flash-preview",
               contents: [{ role: 'user', parts: [{ text: activeQuery }] }],
               config: {
                 systemInstruction: "You are San Slaud, a highly precise and accurate general search engine. You MUST use the googleSearch tool to find EXACT, real-world information, websites, and factual data for the user's query. If the user searches for a website like 'YouTube' or 'Facebook', provide the direct link and a brief description. Do not hallucinate. Format your response beautifully using markdown.",
@@ -461,7 +461,7 @@ export default function App() {
       if (!currentKg) {
         try {
           const aiPanelResponse = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-3-flash-preview",
             contents: [{ role: 'user', parts: [{ text: `Create a structured knowledge panel for the query: "${activeQuery}". 
             Provide a comprehensive, factual, and professional summary of this topic.
             Return a JSON object with exactly these fields:
@@ -547,7 +547,7 @@ export default function App() {
           <div className="w-9 h-9 rounded-xl bg-[#011e38]/50 backdrop-blur-3xl flex items-center justify-center text-brand-blue font-bold text-xl shadow-[0_0_20px_rgba(255,255,255,0.8)] group-hover:scale-110 transition-all relative ring-2 ring-white/20">
             S
           </div>
-          <span className="font-sans font-bold text-2xl tracking-tight text-white drop-shadow-sm group-hover:text-brand-light/70 transition-colors">San Slaud</span>
+          <span className="font-serif font-bold text-2xl tracking-tight text-white drop-shadow-sm group-hover:text-brand-light/70 transition-colors">San Slaud</span>
         </div>
         <div className="flex items-center gap-6">
           <button 
@@ -592,7 +592,7 @@ export default function App() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center mb-12"
             >
-              <h1 className="font-sans font-black text-6xl md:text-8xl mb-8 tracking-tighter text-white drop-shadow-sm">
+              <h1 className="font-serif font-black text-6xl md:text-8xl mb-8 tracking-tighter text-white drop-shadow-sm">
                 San Slaud.
               </h1>
             </motion.div>

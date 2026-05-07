@@ -25,30 +25,35 @@ async function startServer() {
       
       const html = await htmlRes.text();
       
-      // Basic regex parsing for duckduckgo html results
+      // More robust regex parsing for duckduckgo html results
       const results: any[] = [];
-      const regex = /<a class="result__url" href="([^"]+)">[^<]+<\/a>.*?<a class="result__snippet[^>]+>(.*?)<\/a>/gs;
+      const resultBlocks = html.split('<div class="result');
       
-      let match;
-      while ((match = regex.exec(html)) !== null) {
+      for (let i = 1; i < resultBlocks.length; i++) {
+        const block = resultBlocks[i];
         if (results.length >= 10) break;
-        let url = match[1];
-        if (url.startsWith('//duckduckgo.com/l/?uddg=')) {
+        
+        const urlMatch = block.match(/href="([^"]+)"/);
+        const titleMatch = block.match(/<a class="result__a"[^>]*>(.*?)<\/a>/s);
+        const snippetMatch = block.match(/<a class="result__snippet"[^>]*>(.*?)<\/a>/s);
+        
+        let url = urlMatch ? urlMatch[1] : null;
+        let title = titleMatch ? titleMatch[1].replace(/<\/?[^>]+(>|$)/g, "").trim() : null;
+        let snippet = snippetMatch ? snippetMatch[1].replace(/<\/?[^>]+(>|$)/g, "").trim() : null;
+
+        if (url && url.startsWith('//duckduckgo.com/l/?uddg=')) {
           try {
             const raw = url.split('uddg=')[1].split('&')[0];
             url = decodeURIComponent(raw);
           } catch(e){}
         }
         
-        let snippet = match[2].replace(/<\/?[^>]+(>|$)/g, "").trim();
-        let titleMatch = html.substring(match.index - 500, match.index).match(/<h2 class="result__title">.*?<a[^>]+>(.*?)<\/a>.*?<\/h2>/s);
-        let title = titleMatch ? titleMatch[1].replace(/<\/?[^>]+(>|$)/g, "").trim() : url;
-        
-        if (url && !url.includes('duckduckgo.com')) {
-          results.push({ url, title, snippet });
+        if (url && !url.includes('duckduckgo.com') && title) {
+          results.push({ url, title, snippet: snippet || "" });
         }
       }
       
+      console.log(`Search proxy for "${query}" returned ${results.length} results`);
       res.json({ results });
     } catch (e: any) {
       console.error('Search proxy error:', e);
